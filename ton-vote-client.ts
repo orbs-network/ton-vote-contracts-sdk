@@ -10,8 +10,10 @@ class TonVote {
   async getProposal(proposalId: string): Proposal;
   async getProposalResult(proposalId: string): Result;
   async getRecentVotes(proposalId: string): Vote[];
+  async getStrategies(): Strategy[];
   // write
-  async registerDao(metadata: DaoMetadata): string; // TBD
+  async registerDao(metadata: DaoMetadata): string; // TBD - probably on-chain transactions
+  async updateDao(metadata: DaoMetadata); // TBD - probably on-chain transactions
   async submitProposal(proposal: Proposal);
   async submitVote(vote: Vote);
   // low level for proofs (unstable)
@@ -32,12 +34,13 @@ interface DaoMetadata {
   adminAddress: string;
   tokens: Token[];
   name: string;
-  tonDomain: string;
   logoUri: string;
-  website: string;
-  telegram: string;
-  limitProposers: PublicKey[];
-  theme: string;
+  website?: string;
+  telegram?: string;
+  limitProposers?: PublicKey[];
+  theme?: string;
+  tonDomain?: string;
+  hidden?: boolean;
 }
 
 interface Token {
@@ -53,9 +56,10 @@ interface Proposal {
   duration: number;
   description: string;
   choices: Choice[];
-  choiceFormat: "single" | "multiple" | "ranked" | "weighted";
+  votingType: "single" | "approval" | "quadratic" | "ranked" | "weighted" | "basic";
   snapshotLogicalTime: number;
   snapshotStateRoot: string;
+  minimumQuorum?: number;
   proposer: PublicKey;
   proposerSignature: string;
 }
@@ -81,10 +85,14 @@ interface Vote {
   proposalId: string;
   timestamp: number;
   selection: Selection[];
-  balances: Balance[];
-  balanceMerkleProofs: string[];
   voter: PublicKey;
   voterSignature: string;
+}
+
+interface VoteSnapshot {
+  vote: Vote;
+  balances: Balance[];
+  balanceMerkleProofs: string[];
 }
 
 interface Result {
@@ -105,6 +113,12 @@ interface Validator {
   publicKey: PublicKey;
 }
 
+interface Strategy {
+  strategyId: string;
+  description: string;
+  codeUri: string;
+}
+
 // unstable
 
 interface BlockUri {
@@ -123,6 +137,6 @@ interface DaoActivityBlock {
   timestamp: number;
   daoId: string;
   proposals: Proposal[];
-  votes: Vote[];
+  votes: VoteSnapshot[];
   results: Result[];
 }
