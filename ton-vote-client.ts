@@ -21,18 +21,23 @@ class TonVote {
   async getDaoActivityBlock(blockUri: BlockUri): DaoActivityBlock;
 }
 
+type PublicKey = string;
+
 interface Config {
   network?: "mainnet" | "testnet";
 }
 
 interface DaoMetadata {
   daoId: string;
+  adminAddress: string;
   tokens: Token[];
   name: string;
-  logoUri: string;
   tonDomain: string;
+  logoUri: string;
   website: string;
   telegram: string;
+  limitProposers: PublicKey[];
+  theme: string;
 }
 
 interface Token {
@@ -51,7 +56,7 @@ interface Proposal {
   choiceFormat: "single" | "multiple" | "ranked" | "weighted";
   snapshotLogicalTime: number;
   snapshotStateRoot: string;
-  proposerPublicKey: string;
+  proposer: PublicKey;
   proposerSignature: string;
 }
 
@@ -78,7 +83,7 @@ interface Vote {
   selection: Selection[];
   balances: Balance[];
   balanceMerkleProofs: string[];
-  voterPublicKey: string;
+  voter: PublicKey;
   voterSignature: string;
 }
 
@@ -96,8 +101,8 @@ interface EndedProposal {
 }
 
 interface Validator {
-  address: string;
-  publicKey: string;
+  networkAddress: string;
+  publicKey: PublicKey;
 }
 
 // unstable
