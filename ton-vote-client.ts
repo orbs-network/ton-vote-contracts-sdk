@@ -14,7 +14,7 @@ class TonVote {
   // write
   async registerDao(metadata: DaoMetadata): string; // TBD - probably on-chain transactions
   async updateDao(metadata: DaoMetadata); // TBD - probably on-chain transactions
-  async submitProposal(proposal: Proposal);
+  async newProposal(proposal: Proposal);
   async submitVote(vote: Vote);
   // low level for proofs (unstable)
   async getValidators(): Validator[];
