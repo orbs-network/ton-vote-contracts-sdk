@@ -23,24 +23,25 @@ class TonVote {
   async getDaoActivityBlock(blockUri: BlockUri): DaoActivityBlock;
 }
 
-type PublicKey = string;
+export type PublicKey = string;
 
 interface Config {
   network?: "mainnet" | "testnet";
 }
 
 interface DaoMetadata {
-  daoId: string;
+  daoId: string | null;
   adminAddress: string;
   tokens: Token[];
   name: string;
   logoUri: string;
+  tonDomain: string;
   website?: string;
   telegram?: string;
   limitProposers?: PublicKey[];
   theme?: string;
-  tonDomain?: string;
   hidden?: boolean;
+  adminSignature?: string;
 }
 
 interface Token {
