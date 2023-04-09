@@ -22,12 +22,12 @@ export async function getDaos(client : TonClient, startId = 0, batchSize=BigInt(
 
   const endDaoId = min(nextDaoId, batchSize);
 
-  for (let id = BigInt(endDaoId)-1n; id >= startId; id--) {
+  for (let id = BigInt(startId); id < endDaoId; id++) {
     let daoAddr = await registryContract.getDaoAddress(id);
     daoAddresses.push(daoAddr);
   }
 
-  return {endDaoId, daoAddresses};
+  return {endDaoId, daoAddresses: daoAddresses.reverse()};
 }
 
 export async function getDaoMetadata(client : TonClient, daoAddr: Address): Promise<MetadataArgs> {  
@@ -73,12 +73,12 @@ export async function getDaoProposals(client : TonClient, daoAddr: Address, star
     const endProposalId = min(nextProposalId, batchSize);
     let proposalAddresses: Address[] = [];
 
-    for (let id = BigInt(endProposalId)-1n; id >= startId ; id--) {
+    for (let id = BigInt(startId); id < endProposalId; id++) {
         let daoAddr = await proposalDeployer.getProposalAddr(id);
         proposalAddresses.push(daoAddr);
     }
 
-    return {endProposalId, proposalAddresses};
+    return {endProposalId, proposalAddresses: proposalAddresses.reverse()};
 }
 
 

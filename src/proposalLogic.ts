@@ -10,6 +10,7 @@ import { ProposalMetadata, ProposalResult, Votes, VotingPower } from "./interfac
 export async function getClientV2(customEndpoint?: string, apiKey?: string): Promise<TonClient> {
   // customEndpoint = 'https://ton.access.orbs.network/19e116699fd6c7ad754a912af633aafec27cc456/1/mainnet/toncenter-api-v2/jsonRPC';
   // customEndpoint = 'https://ton.access.orbs.network/1cde611619e2a466c87a23b64870397436082895/1/mainnet/toncenter-api-v2/jsonRPC';
+  // customEndpoint = 'https://ton.access.orbs.network/44A1c0ff5Bd3F8B62C092Ab4D238bEE463E644A1/1/mainnet/toncenter-api-v2/jsonRPC'
   
   if (customEndpoint) {
     return new TonClient({ endpoint: customEndpoint, apiKey });
