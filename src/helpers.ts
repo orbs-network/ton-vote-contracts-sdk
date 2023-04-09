@@ -122,7 +122,7 @@ export async function waitForConditionChange<T>(func: (...args: any[]) => Promis
   let count = 0;
 
   do {            
-    sleep(sleepIntervalMilli);
+    await sleep(sleepIntervalMilli);
     res = await func(...args);
     count++;
 
