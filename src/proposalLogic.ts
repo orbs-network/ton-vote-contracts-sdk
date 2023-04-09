@@ -8,6 +8,9 @@ import { ProposalMetadata, ProposalResult, Votes, VotingPower } from "./interfac
 
 
 export async function getClientV2(customEndpoint?: string, apiKey?: string): Promise<TonClient> {
+  // customEndpoint = 'https://ton.access.orbs.network/19e116699fd6c7ad754a912af633aafec27cc456/1/mainnet/toncenter-api-v2/jsonRPC';
+  // customEndpoint = 'https://ton.access.orbs.network/1cde611619e2a466c87a23b64870397436082895/1/mainnet/toncenter-api-v2/jsonRPC';
+  
   if (customEndpoint) {
     return new TonClient({ endpoint: customEndpoint, apiKey });
   }
@@ -31,44 +34,32 @@ export async function getTransactions(
   
   let allTxns: Transaction[] = [];
   let paging = startPage;
-  console.log(toLt, paging);
-  
+  const limit = 10;
+
   while (true) {
     console.log("Querying...");
     const txns = await client.getTransactions(contractAddress, {
       lt: paging.fromLt,
       to_lt: toLt,
       hash: paging.hash,
-      limit: 500,
+      limit: limit,
     });  
 
     console.log(`Got ${txns.length}, lt ${paging.fromLt}`);
-
-    if (txns.length === 0) break;
-
+    console.log(txns);
+    
     allTxns = [...allTxns, ...txns];
 
-    // console.log("===========");
-    // console.log(allTxns[0]);
-    // console.log(allTxns[1]);
-    // process.exit();
-    
-    // paging.fromLt = (txns[txns.length - 1].lt).toString();
-    paging.fromLt = (txns[txns.length - 1].prevTransactionLt).toString();
-    paging.hash = (txns[txns.length - 1].prevTransactionHash).toString(16);
-
-    console.log(paging, 'new paging');
-    
-    // console.log((txns[txns.length - 1].prevTransactionLt).toString());
-    // console.log(txns);
-    console.log(txns[txns.length-1]);
-
-    if (paging.fromLt === '0') break;
-
-    
     txns.forEach((t) => {
       maxLt = BigNumber.max(new BigNumber(t.lt.toString()), maxLt);
     });
+
+    if (txns.length == 0 || txns.length < limit) break;
+
+    paging.fromLt = (txns[txns.length - 2].prevTransactionLt).toString();
+    paging.hash = bigintToBase64(txns[txns.length - 2].prevTransactionHash);
+
+    // console.log('new paging: ', paging);        
   }
 
   return { allTxns, maxLt: maxLt.toString() };
@@ -213,18 +204,36 @@ export function getCurrentResults(transactions: Transaction[], votingPower: Voti
 }
 
 
-async function test() {
-  let client = await getClientV2();
-  console.log(client);
-  const elector = Address.parse("Ef8zMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM0vF");
-  const myWallet = Address.parse("EQDHz85Bey_jEhUvHYCgC3__f0qj5_QKNJMK4uvLCZTRxQE6");
-  const votingContract = Address.parse("Ef-V3WPoPFeecWLT5vL41YIFrBFczkk-4sd3dhbJmO7McyEw");
+function bigintToBase64(bn: BigInt) {
+  var hex = bn.toString(16);
+  if (hex.length % 2) { hex = '0' + hex; }
 
-  let x= await getTransactions(client, votingContract);
-  console.log(x);
-  
-  
+  var bin = [];
+  var i = 0;
+  var d;
+  var b;
+  while (i < hex.length) {
+    d = parseInt(hex.slice(i, i + 2), 16);
+    b = String.fromCharCode(d);
+    bin.push(b);
+    i += 2;
+  }
+
+  return btoa(bin.join(''));
 }
 
 
-test().then(() => console.log('all done'));
+async function test() {
+  let client = await getClientV2();
+  console.log(client);
+  const votingContract = Address.parse("Ef-V3WPoPFeecWLT5vL41YIFrBFczkk-4sd3dhbJmO7McyEw");
+
+  let x= await getTransactions(client, votingContract);
+  console.log(x);  
+  console.log(x.allTxns.length);
+  
+}
+
+test().then(() => {console.log('all done')});
+
+
