@@ -19,7 +19,7 @@ export async function getClientV2(customEndpoint?: string, apiKey?: string): Pro
   return new TonClient({ endpoint });
 }
 
-export async function getClientV4(customEndpoint: string): Promise<TonClient4> {
+export async function getClientV4(customEndpoint?: string): Promise<TonClient4> {
   const endpoint = customEndpoint || "https://mainnet-v4.tonhubapi.com";
   return new TonClient4({ endpoint });
 }
