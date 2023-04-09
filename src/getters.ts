@@ -14,13 +14,11 @@ export async function getRegistry(client : TonClient): Promise<Address> {
     return registryContract.address;
 }
 
-export async function getDaos(client : TonClient, startId = 0, batchSize=BigInt(10)): Promise<{endDaoId: bigint, daoAddresses: Address[]}> {  
+export async function getDaos(client : TonClient, startId = 0): Promise<{endDaoId: bigint, daoAddresses: Address[]}> {  
 
   let registryContract = client.open(await Registry.fromInit());
-  const nextDaoId = await registryContract.getNextDaoId();
+  const endDaoId = await registryContract.getNextDaoId();
   let daoAddresses: Address[] = [];
-
-  const endDaoId = min(nextDaoId, batchSize + BigInt(startId));
 
   for (let id = BigInt(startId); id < endDaoId; id++) {
     let daoAddr = await registryContract.getDaoAddress(id);
@@ -60,7 +58,7 @@ export async function getDaoRoles(client : TonClient, daoAddr: Address): Promise
     return {id, owner, proposalOwner};
 }
 
-export async function getDaoProposals(client : TonClient, daoAddr: Address, startId = 0, batchSize=BigInt(10)): Promise<{endProposalId: bigint, proposalAddresses: Address[] | undefined}> {
+export async function getDaoProposals(client : TonClient, daoAddr: Address, startId = 0): Promise<{endProposalId: bigint, proposalAddresses: Address[] | undefined}> {
     let daoContract = client.open(Dao.fromAddress(daoAddr));
     let proposalDeployer = client.open(await ProposalDeployer.fromInit(daoContract.address));
 
@@ -68,9 +66,8 @@ export async function getDaoProposals(client : TonClient, daoAddr: Address, star
         return {endProposalId: BigInt(-1), proposalAddresses: undefined}
     }
 
-    let nextProposalId = await proposalDeployer.getNextProposalId();
+    let endProposalId = await proposalDeployer.getNextProposalId();
 
-    const endProposalId = min(nextProposalId, batchSize + BigInt(startId));
     let proposalAddresses: Address[] = [];
 
     for (let id = BigInt(startId); id < endProposalId; id++) {
