@@ -222,19 +222,3 @@ function bigintToBase64(bn: BigInt) {
 
   return btoa(bin.join(''));
 }
-
-
-async function test() {
-  let client = await getClientV2();
-  console.log(client);
-  const votingContract = Address.parse("Ef-V3WPoPFeecWLT5vL41YIFrBFczkk-4sd3dhbJmO7McyEw");
-
-  let x= await getTransactions(client, votingContract);
-  console.log(x);  
-  console.log(x.allTxns.length);
-  
-}
-
-test().then(() => {console.log('all done')});
-
-

@@ -14,18 +14,23 @@ export async function getRegistry(client : TonClient): Promise<Address> {
     return registryContract.address;
 }
 
-export async function getDaos(client : TonClient, startId = 0): Promise<{endDaoId: bigint, daoAddresses: Address[]}> {  
+export async function getDaos(client : TonClient, startId: null | number = null, batchSize=10): Promise<{endDaoId: number, daoAddresses: Address[]}> {  
 
   let registryContract = client.open(await Registry.fromInit());
-  const endDaoId = await registryContract.getNextDaoId();
   let daoAddresses: Address[] = [];
 
-  for (let id = BigInt(startId); id < endDaoId; id++) {
-    let daoAddr = await registryContract.getDaoAddress(id);
+  if (startId == null) {
+    startId = Number(await registryContract.getNextDaoId())-1;
+  }
+
+  const endDaoId = Math.max(0, startId - batchSize + 1);
+
+  for (let id = startId; id >= endDaoId; id--) {
+    let daoAddr = await registryContract.getDaoAddress(BigInt(id));
     daoAddresses.push(daoAddr);
   }
 
-  return {endDaoId, daoAddresses: daoAddresses.reverse()};
+  return {endDaoId: endDaoId-1, daoAddresses};
 }
 
 export async function getDaoMetadata(client : TonClient, daoAddr: Address): Promise<MetadataArgs> {  
@@ -58,24 +63,28 @@ export async function getDaoRoles(client : TonClient, daoAddr: Address): Promise
     return {id, owner, proposalOwner};
 }
 
-export async function getDaoProposals(client : TonClient, daoAddr: Address, startId = 0): Promise<{endProposalId: bigint, proposalAddresses: Address[] | undefined}> {
+export async function getDaoProposals(client : TonClient, daoAddr: Address, startId: number | null = null, batchSize=10): Promise<{endProposalId: number, proposalAddresses: Address[] | undefined}> {
     let daoContract = client.open(Dao.fromAddress(daoAddr));
     let proposalDeployer = client.open(await ProposalDeployer.fromInit(daoContract.address));
 
     if (!(await client.isContractDeployed(proposalDeployer.address))) {
-        return {endProposalId: BigInt(-1), proposalAddresses: undefined}
+        return {endProposalId: -1, proposalAddresses: undefined}
     }
 
-    let endProposalId = await proposalDeployer.getNextProposalId();
+    let nextProposalId = Number(await proposalDeployer.getNextProposalId());
+
+    if (startId == null) startId = nextProposalId - 1;
+
+    const endProposalId = Math.max(0, startId - batchSize + 1);
 
     let proposalAddresses: Address[] = [];
 
-    for (let id = BigInt(startId); id < endProposalId; id++) {
-        let daoAddr = await proposalDeployer.getProposalAddr(id);
+    for (let id = startId; id <= endProposalId; id--) {
+        let daoAddr = await proposalDeployer.getProposalAddr(BigInt(id));
         proposalAddresses.push(daoAddr);
     }
 
-    return {endProposalId, proposalAddresses: proposalAddresses.reverse()};
+    return {endProposalId: endProposalId-1, proposalAddresses};
 }
 
 
