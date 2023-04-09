@@ -20,7 +20,7 @@ export async function getDaos(client : TonClient, startId = 0, batchSize=BigInt(
   const nextDaoId = await registryContract.getNextDaoId();
   let daoAddresses: Address[] = [];
 
-  const endDaoId = min(nextDaoId, batchSize);
+  const endDaoId = BigInt(startId) + min(nextDaoId, batchSize);
 
   for (let id = BigInt(startId); id < endDaoId; id++) {
     let daoAddr = await registryContract.getDaoAddress(id);
@@ -70,7 +70,7 @@ export async function getDaoProposals(client : TonClient, daoAddr: Address, star
 
     let nextProposalId = await proposalDeployer.getNextProposalId();
 
-    const endProposalId = min(nextProposalId, batchSize);
+    const endProposalId = BigInt(startId) + min(nextProposalId, batchSize);
     let proposalAddresses: Address[] = [];
 
     for (let id = BigInt(startId); id < endProposalId; id++) {
