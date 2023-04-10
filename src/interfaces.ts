@@ -18,9 +18,9 @@ export interface MetadataArgs {
 
 export interface ProposalMetadata {
 
-    id?: number;
-    owner?: string;
-    mcSnapshotBlock?: number;
+    id: number;
+    owner: string;
+    mcSnapshotBlock: number;
     proposalStartTime: number;
     proposalEndTime: number;
     proposalSnapshotTime: number;
