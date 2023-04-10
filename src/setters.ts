@@ -100,7 +100,7 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: A
 
     let code: Cell | null = proposalDeployerContract.init.code;
     let data: Cell | null = proposalDeployerContract.init.data;
-    let nextProposalId = BigInt(-1);
+    let nextProposalId = BigInt(0);
 
     if (await client.isContractDeployed(proposalDeployerContract.address)) {
         code = null;
@@ -120,11 +120,11 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: A
                     $$type: 'CreateProposal',
                     body: {
                         $$type: 'Params',
-                        proposalStartTime: proposalMetadata.proposalStartTime,
-                        proposalEndTime: proposalMetadata.proposalEndTime,
-                        proposalSnapshotTime: proposalMetadata.proposalSnapshotTime,
-                        proposalType: proposalMetadata.proposalType,
-                        votingPowerStrategy: proposalMetadata.votingPowerStrategy
+                        proposalStartTime: BigInt(proposalMetadata.proposalStartTime),
+                        proposalEndTime: BigInt(proposalMetadata.proposalEndTime),
+                        proposalSnapshotTime: BigInt(proposalMetadata.proposalSnapshotTime),
+                        proposalType: BigInt(proposalMetadata.proposalType),
+                        votingPowerStrategy: BigInt(proposalMetadata.votingPowerStrategy)
                     }
                 })).endCell(),
                 code: code,
@@ -133,9 +133,9 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: A
         }
     );      
 
-    let proposalContract = await Proposal.fromInit(proposalDeployerContract.address, nextProposalId+BigInt(1));
+    let proposalContract = await Proposal.fromInit(proposalDeployerContract.address, nextProposalId);
     
-    return await waitForConditionChange(proposalDeployerContract.getNextProposalId.bind(proposalDeployerContract), [], nextProposalId) && proposalContract.address;
+    return await waitForConditionChange(proposalDeployerContract.getNextProposalId, [], nextProposalId) && proposalContract.address;
 }
 
 export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: Address, newOwner: Address): Promise<Address | boolean> {  

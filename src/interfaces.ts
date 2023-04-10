@@ -1,5 +1,10 @@
 import { Address } from "ton-core";
 
+export interface DaoRoles {
+    owner: string;
+    proposalOwner: string;
+}
+
 export interface MetadataArgs {
     about   : string;
     avatar  : string;
@@ -13,14 +18,14 @@ export interface MetadataArgs {
 
 export interface ProposalMetadata {
 
-    id?: bigint;
-    owner?: Address;
+    id?: number;
+    owner?: string;
     mcSnapshotBlock?: number;
-    proposalStartTime: bigint;
-    proposalEndTime: bigint;
-    proposalSnapshotTime: bigint;
-    proposalType: bigint;
-    votingPowerStrategy: bigint;
+    proposalStartTime: number;
+    proposalEndTime: number;
+    proposalSnapshotTime: number;
+    proposalType: number;
+    votingPowerStrategy: number;
 }
 
 export interface Votes {
