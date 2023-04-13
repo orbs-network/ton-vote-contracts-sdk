@@ -26,7 +26,7 @@ export async function getClientV4(customEndpoint?: string): Promise<TonClient4> 
 
 export async function getTransactions(
   client: TonClient,
-  contractAddress: Address,
+  contractAddress: string,
   toLt?: string
 ): Promise<{allTxns: Transaction[], maxLt: string}> {
 
@@ -39,7 +39,7 @@ export async function getTransactions(
 
   while (true) {
     console.log("Querying...");
-    const txns = await client.getTransactions(contractAddress, {
+    const txns = await client.getTransactions(Address.parse(contractAddress), {
       lt: paging.fromLt,
       to_lt: toLt,
       hash: paging.hash,
@@ -141,12 +141,12 @@ export async function getVotingPower(
 export async function getSingleVotingPower(
   clientV4: TonClient4,
   mcSnapshotBlock: number,
-  address: Address
+  address: string
 ): Promise<string> {
     return (
       await clientV4.getAccountLite(
         mcSnapshotBlock,
-        address
+        Address.parse(address)
       )
     ).account.balance.coins;
 }
