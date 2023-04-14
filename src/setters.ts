@@ -196,3 +196,19 @@ export async function daoSetProposalOwner(sender: Sender, client : TonClient, da
     
     return await waitForConditionChange(daoContract.getProposalOwner, [], proposalOwner) && newProposalOwner;
 }
+
+export async function proposalSendMessage(sender: Sender, client: TonClient, proposalAddr: string, msgValue: string, msgBody: string) {
+    if (!sender.address) {
+        console.log(`sender address is not defined`);
+        return false;
+    }
+    
+    let proposalContract = client.open(Proposal.fromAddress(Address.parse(proposalAddr)));
+    if (!(await client.isContractDeployed(proposalContract.address))) {
+        console.log("Proposal contract is not deployed");
+        return false;
+    }
+    const seqno = client.runMethod(sender.address, 'seqno');
+    await proposalContract.send(sender, { value: toNano(msgValue), bounce: true }, { $$type: 'Comment', body: msgBody });
+    return await waitForConditionChange(client.runMethod, [sender.address, 'seqno'], seqno);
+}
