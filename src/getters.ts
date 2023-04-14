@@ -146,7 +146,7 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
 }
 
 
-export async function getProposalInfo(client : TonClient, client4: TonClient4, proposalAddr: string): Promise<ProposalMetadata> {
+export async function getProposalMetadata(client : TonClient, client4: TonClient4, proposalAddr: string): Promise<ProposalMetadata> {
     let proposal = client.open(Proposal.fromAddress(Address.parse(proposalAddr)));
 
     const id = Number(await proposal.getId());

@@ -14,7 +14,7 @@ const PROPOSAL_DEPLOY_VALUE = "0.25";
 const SET_OWNER_DEPLOY_VALUE = "0.25";
 const SET_PROPOSAL_OWNER_DEPLOY_VALUE = "0.25";
 
-export async function newDao(sender: Sender, client : TonClient, metadataAddr: Address, ownerAddr: Address, proposalOwner: Address): Promise<Address | boolean> {  
+export async function newDao(sender: Sender, client : TonClient, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -29,24 +29,24 @@ export async function newDao(sender: Sender, client : TonClient, metadataAddr: A
     if (await client.isContractDeployed(daoContract.address)) {
         
         console.log("Contract already deployed");
-        return daoContract.address;
+        return daoContract.address.toString();
     
     } else {
                 
         await registryContract.send(sender, { value: toNano(DAO_DEPLOY_VALUE) }, 
         { 
             $$type: 'CreateDao', 
-            owner: ownerAddr, 
-            proposalOwner: proposalOwner, 
-            metadata: metadataAddr
+            owner: Address.parse(ownerAddr), 
+            proposalOwner: Address.parse(proposalOwner), 
+            metadata: Address.parse(metadataAddr)
         });
 
-        return await waitForConditionChange(registryContract.getNextDaoId, [], nextDaoId) && daoContract.address;
+        return await waitForConditionChange(registryContract.getNextDaoId, [], nextDaoId) && daoContract.address.toString();
     }
     
 }
 
-export async function newMetdata(sender: Sender, client : TonClient, metadataArgs: MetadataArgs): Promise<Address | boolean> {  
+export async function newMetdata(sender: Sender, client : TonClient, metadataArgs: MetadataArgs): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);
@@ -61,23 +61,23 @@ export async function newMetdata(sender: Sender, client : TonClient, metadataArg
     
     if (await client.isContractDeployed(metadataContract.address)) {
         console.log("Contract already deployed");
-        return metadataContract.address;
+        return metadataContract.address.toString();
 
     } else {
         await metadataContract.send(sender, { value: toNano('0.25') }, { $$type: 'Deploy' as const, queryId: BigInt(0) });
     }
 
-    return await waitForContractToBeDeployed(client, metadataContract.address) && metadataContract.address;
+    return await waitForContractToBeDeployed(client, metadataContract.address) && metadataContract.address.toString();
 }
 
-export async function newProposal(sender: Sender, client : TonClient, daoAddr: Address, proposalMetadata: ProposalMetadata): Promise<Address | boolean> {  
+export async function newProposal(sender: Sender, client : TonClient, daoAddr: string, proposalMetadata: ProposalMetadata): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
         return false;
     };
     
-    let daoContract = client.open(Dao.fromAddress(daoAddr));
+    let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
 
     if (!(await client.isContractDeployed(daoContract.address))) {        
         console.log("Dao contract is not deployed");
@@ -92,7 +92,7 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: A
         return false;
     }
 
-    let proposalDeployerContract = client.open(await ProposalDeployer.fromInit(daoAddr));
+    let proposalDeployerContract = client.open(await ProposalDeployer.fromInit(Address.parse(daoAddr)));
     if (!proposalDeployerContract.init) {
         console.log('proposalDeployer init is undefined');
         return false;
@@ -135,17 +135,17 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: A
 
     let proposalContract = await Proposal.fromInit(proposalDeployerContract.address, nextProposalId);
     
-    return await waitForConditionChange(proposalDeployerContract.getNextProposalId, [], nextProposalId) && proposalContract.address;
+    return await waitForConditionChange(proposalDeployerContract.getNextProposalId, [], nextProposalId) && proposalContract.address.toString();
 }
 
-export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: Address, newOwner: Address): Promise<Address | boolean> {  
+export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: string, newOwner: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
         return false;
     };
     
-    let daoContract = client.open(Dao.fromAddress(daoAddr));
+    let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
 
     if (!(await client.isContractDeployed(daoContract.address))) {        
         console.log("Dao contract is not deployed");
@@ -160,21 +160,21 @@ export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: A
 
     await daoContract.send(sender, { value: toNano(SET_OWNER_DEPLOY_VALUE) }, 
         { 
-            $$type: 'SetOwner', newOwner: newOwner
+            $$type: 'SetOwner', newOwner: Address.parse(newOwner)
         }
     );      
     
-    return await waitForConditionChange(daoContract.getOwner, [], owner) && owner;
+    return await waitForConditionChange(daoContract.getOwner, [], owner) && owner.toString();
 }
 
-export async function daoSetProposalOwner(sender: Sender, client : TonClient, daoAddr: Address, newProposalOwner: Address): Promise<Address | boolean> {  
+export async function daoSetProposalOwner(sender: Sender, client : TonClient, daoAddr: string, newProposalOwner: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
         return false;
     };
     
-    let daoContract = client.open(Dao.fromAddress(daoAddr));
+    let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
 
     if (!(await client.isContractDeployed(daoContract.address))) {        
         console.log("Dao contract is not deployed");
@@ -190,7 +190,7 @@ export async function daoSetProposalOwner(sender: Sender, client : TonClient, da
 
     await daoContract.send(sender, { value: toNano(SET_PROPOSAL_OWNER_DEPLOY_VALUE) }, 
         { 
-            $$type: 'SetProposalOwner', newProposalOwner: newProposalOwner
+            $$type: 'SetProposalOwner', newProposalOwner: Address.parse(newProposalOwner)
         }
     );      
     

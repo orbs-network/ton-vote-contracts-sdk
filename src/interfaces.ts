@@ -1,4 +1,10 @@
-import { Address } from "ton-core";
+import { Transaction } from "ton";
+
+export interface TxData {
+    allTxns: Transaction [], 
+    maxLt: undefined | string
+};
+
 
 export interface DaoRoles {
     owner: string;
@@ -29,12 +35,12 @@ export interface ProposalMetadata {
 }
 
 export interface Votes {
-    [key: string]: {timestamp: number, vote: string, hash: string};
+    [voter: string]: {timestamp: number, vote: string, hash: string};
 }
 
 
 export interface VotingPower {
-    [key: string]: string;
+    [voter: string]: string;
 }
 
 export interface ProposalResult {

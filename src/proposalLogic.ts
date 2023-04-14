@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
 import { Transaction } from 'ton-core';
-import { ProposalMetadata, ProposalResult, Votes, VotingPower } from "./interfaces";
+import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData } from "./interfaces";
 
 
 export async function getClientV2(customEndpoint?: string, apiKey?: string): Promise<TonClient> {
@@ -28,7 +28,7 @@ export async function getTransactions(
   client: TonClient,
   contractAddress: string,
   toLt?: string
-): Promise<{allTxns: Transaction[], maxLt: string}> {
+): Promise<TxData> {
 
   let maxLt = new BigNumber(toLt ?? -1);
   let startPage = { fromLt: "0", hash: "" };
@@ -74,7 +74,7 @@ export function filterTxByTimestamp(transactions: Transaction[], lastLt: string)
   return filteredTx;
 }
 
-export function getAllVotes(transactions: Transaction[], proposalInfo: ProposalMetadata): Votes {
+export function getAllVotes(transactions: Transaction[], proposalMetadata: ProposalMetadata): Votes {
   let allVotes: Votes = {};
 
   for (let i = transactions.length - 1; i >= 0; i--) {
@@ -88,8 +88,8 @@ export function getAllVotes(transactions: Transaction[], proposalInfo: ProposalM
     let txSrc = tx.toString();
 
     if (
-      transactions[i].now < proposalInfo.proposalStartTime ||
-      transactions[i].now > proposalInfo.proposalEndTime || CUSTODIAN_ADDRESSES.includes(txSrc)
+      transactions[i].now < proposalMetadata.proposalStartTime ||
+      transactions[i].now > proposalMetadata.proposalEndTime || CUSTODIAN_ADDRESSES.includes(txSrc)
     )
       continue;
 
@@ -114,22 +114,22 @@ export function getAllVotes(transactions: Transaction[], proposalInfo: ProposalM
 
 export async function getVotingPower(
   clientV4: TonClient4,
-  proposalInfo: ProposalMetadata,
+  proposalMetadata: ProposalMetadata,
   transactions: Transaction[],
   votingPower: VotingPower = {}
 ): Promise<VotingPower> {
-  let voters = Object.keys(getAllVotes(transactions, proposalInfo));
+  let voters = Object.keys(getAllVotes(transactions, proposalMetadata));
 
   let newVoters = [...new Set([...voters, ...Object.keys(votingPower)])];
 
   if (!newVoters) return votingPower;
 
-  if (!proposalInfo.mcSnapshotBlock) return votingPower;
+  if (!proposalMetadata.mcSnapshotBlock) return votingPower;
 
   for (const voter of newVoters) {
     votingPower[voter] = (
       await clientV4.getAccountLite(
-        proposalInfo.mcSnapshotBlock,
+        proposalMetadata.mcSnapshotBlock,
         Address.parse(voter)
       )
     ).account.balance.coins;
@@ -199,8 +199,8 @@ export function calcProposalResult(votes: Votes, votingPower: VotingPower): Prop
   };
 }
 
-export function getCurrentResults(transactions: Transaction[], votingPower: VotingPower, proposalInfo: ProposalMetadata): ProposalResult {
-  let votes = getAllVotes(transactions, proposalInfo);
+export function getCurrentResults(transactions: Transaction[], votingPower: VotingPower, proposalMetadata: ProposalMetadata): ProposalResult {
+  let votes = getAllVotes(transactions, proposalMetadata);
   return calcProposalResult(votes, votingPower);
 }
 
