@@ -1,7 +1,7 @@
 {
   "name": "ton-vote-sdk",
   "description": "sdk for ton vote contracts",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "license": "MIT",
   "author": "Ami Hazbany",
   "main": "dist/src/index.js",
@@ -11,7 +11,9 @@
   ],
   "scripts": {
     "e2e": "mocha --require ts-node/register --timeout 120000 --exit tests/e2e.ts",
-    "build": "tsc",
+    "clean": "rimraf ./dist/",
+    "prebuild": "npm run clean",
+    "build": "tsc --skipLibCheck -p ./tsconfig.json",
     "publish": "tsc && npm publish"
   },
   "engines": {
