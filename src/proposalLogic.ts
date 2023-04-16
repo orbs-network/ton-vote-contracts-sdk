@@ -1,5 +1,5 @@
 import { getHttpEndpoint } from "@orbs-network/ton-access";
-import { Address, TonClient, TonClient4 } from "ton";
+import { Address, TonClient, TonClient4, Cell } from "ton";
 import BigNumber from "bignumber.js";
 import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
@@ -32,7 +32,6 @@ export async function getTransactions(
 
   let maxLt = new BigNumber(toLt ?? -1);
   let startPage = { fromLt: "0", hash: "" };
-  
   let allTxns: Transaction[] = [];
   let paging = startPage;
   const limit = 10;
@@ -74,13 +73,27 @@ export function filterTxByTimestamp(transactions: Transaction[], lastLt: string)
   return filteredTx;
 }
 
+function extractComment(body: Cell | undefined): string | null {
+
+  if (!body) return null;
+  
+  const vote = body?.beginParse()
+  const op = vote.loadBits(32);
+  if (Number(op.toString()) != 0) {
+      return null;
+  }
+
+  const comment = vote.loadBits(vote.remainingBits).toString();
+  return Buffer.from(comment, 'hex').toString('utf-8');
+}
+
 export function getAllVotes(transactions: Transaction[], proposalMetadata: ProposalMetadata): Votes {
   let allVotes: Votes = {};
 
   for (let i = transactions.length - 1; i >= 0; i--) {
     const txnBody = transactions[i]?.inMessage?.body;
 
-    let vote = txnBody?.toString();
+    let vote = extractComment(txnBody);
     if (!vote) continue;
 
     let tx = transactions[i]?.inMessage?.info.src;
