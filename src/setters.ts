@@ -135,6 +135,8 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: s
     );      
 
     let proposalContract = await Proposal.fromInit(proposalDeployerContract.address, nextProposalId);
+
+    await waitForContractToBeDeployed(client, proposalContract.address);
     
     return await waitForConditionChange(proposalDeployerContract.getNextProposalId, [], nextProposalId) && proposalContract.address.toString();
 }
