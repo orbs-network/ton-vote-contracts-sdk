@@ -5,13 +5,14 @@ import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
 import { Transaction } from 'ton-core';
 import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData } from "./interfaces";
+// import * as fs from 'fs';
 
+// const PROPOSAL_ABI = fs.readFileSync('./dist/contracts/output/ton-vote_Proposal.abi', 'utf-8');
+
+const PROPOSAL_VOTE_OP = 880812829;
 
 export async function getClientV2(customEndpoint?: string, apiKey?: string): Promise<TonClient> {
-  // customEndpoint = 'https://ton.access.orbs.network/19e116699fd6c7ad754a912af633aafec27cc456/1/mainnet/toncenter-api-v2/jsonRPC';
-  // customEndpoint = 'https://ton.access.orbs.network/1cde611619e2a466c87a23b64870397436082895/1/mainnet/toncenter-api-v2/jsonRPC';
-  // customEndpoint = 'https://ton.access.orbs.network/44A1c0ff5Bd3F8B62C092Ab4D238bEE463E644A1/1/mainnet/toncenter-api-v2/jsonRPC'
-  
+
   if (customEndpoint) {
     return new TonClient({ endpoint: customEndpoint, apiKey });
   }
@@ -76,15 +77,24 @@ export function filterTxByTimestamp(transactions: Transaction[], lastLt: string)
 function extractComment(body: Cell | undefined): string | null {
 
   if (!body) return null;
-  
-  const vote = body?.beginParse()
-  const op = vote.loadBits(32);
-  if (Number(op.toString()) != 0) {
-      return null;
+
+  const vote = body?.beginParse();
+  const op = parseInt(vote.loadBits(32).toString(), 16);
+
+  if (op == 0) {
+    const comment = vote.loadBits(vote.remainingBits).toString();
+    return Buffer.from(comment, 'hex').toString('utf-8');
+
   }
 
-  const comment = vote.loadBits(vote.remainingBits).toString();
-  return Buffer.from(comment, 'hex').toString('utf-8');
+  if (op == PROPOSAL_VOTE_OP) {
+      const refVote = vote.loadRef().beginParse();
+      const comment = refVote.loadBits(refVote.remainingBits).toString();
+      return Buffer.from(comment, 'hex').toString('utf-8');
+  }
+
+  return null;
+
 }
 
 export function getAllVotes(transactions: Transaction[], proposalMetadata: ProposalMetadata): Votes {
@@ -235,3 +245,8 @@ function bigintToBase64(bn: BigInt) {
 
   return btoa(bin.join(''));
 }
+
+// function getproposalCommentOp() {
+//   const commentData = JSON.parse(PROPOSAL_ABI).types.find((o: {name: string}) => o.name == 'Comment');
+//   return Number(commentData.header);    
+// }

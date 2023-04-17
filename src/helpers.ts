@@ -24,7 +24,7 @@ export async function waitForContractToBeDeployed(client: TonClient, deployedCon
   return retval;
 }
 
-// export async function waitForSeqno(walletContract: OpenedContract, seqno: number) {
+// export async function waitForSeqno(walletContract: OpenedContract<T>, seqno: number) {
 //   const seqnoStepInterval = 3000;
 //   console.log(`⏳ waiting for seqno to update (${seqno})`);
 //   for (var attempt = 0; attempt < 10; attempt++) {
@@ -142,4 +142,15 @@ export async function waitForConditionChange<T>(func: (...args: any[]) => Promis
 
 export const randomInt = (min: number = 0, max: number = 2 ^ 32 - 1): number => {
   return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+export async function getSeqno(client: TonClient, address: string): Promise<bigint | null> {
+
+  let seqno = await client.runMethod(Address.parse(address), 'seqno');
+  const stack = seqno.stack.pop();
+  if (typeof stack === 'object' && stack.type == 'int') {
+      return stack.value;
+  }
+  
+  return null
 }

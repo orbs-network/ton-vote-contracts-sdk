@@ -1,4 +1,4 @@
-import { waitForConditionChange, waitForContractToBeDeployed } from "./helpers";
+import { waitForConditionChange, waitForContractToBeDeployed, getSeqno } from "./helpers";
 import { Registry } from '../contracts/output/ton-vote_Registry'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
@@ -13,6 +13,7 @@ const DAO_DEPLOY_VALUE = "0.25"; // TODO: fixme change to 1 ton
 const PROPOSAL_DEPLOY_VALUE = "0.25";
 const SET_OWNER_DEPLOY_VALUE = "0.25";
 const SET_PROPOSAL_OWNER_DEPLOY_VALUE = "0.25";
+
 
 export async function newDao(sender: Sender, client : TonClient, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
 
@@ -202,13 +203,14 @@ export async function proposalSendMessage(sender: Sender, client: TonClient, pro
         console.log(`sender address is not defined`);
         return false;
     }
-    
+        
     let proposalContract = client.open(Proposal.fromAddress(Address.parse(proposalAddr)));
     if (!(await client.isContractDeployed(proposalContract.address))) {
         console.log("Proposal contract is not deployed");
         return false;
     }
-    const seqno = client.runMethod(sender.address, 'seqno');
+    
+    const seqno = await getSeqno(client, sender.address.toString());
     await proposalContract.send(sender, { value: toNano(msgValue), bounce: true }, { $$type: 'Comment', body: msgBody });
-    return await waitForConditionChange(client.runMethod, [sender.address, 'seqno'], seqno);
+    await waitForConditionChange(getSeqno, [client, sender.address.toString()], seqno);
 }
