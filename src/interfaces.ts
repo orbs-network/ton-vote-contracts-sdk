@@ -36,6 +36,8 @@ export interface ProposalMetadata {
     votingPowerStrategy: number;
     title: string;
     description: string;
+    jetton: string;
+    nft: string;
 }
 
 export interface Votes {

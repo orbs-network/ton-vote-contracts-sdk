@@ -135,6 +135,10 @@ export function getAllVotes(transactions: Transaction[], proposalMetadata: Propo
   return allVotes;
 }
 
+function getSingleVoterPower(voter: string, strategy: string = 'ton-balance') {
+
+}
+
 export async function getVotingPower(
   clientV4: TonClient4,
   proposalMetadata: ProposalMetadata,
