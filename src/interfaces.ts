@@ -18,7 +18,9 @@ export interface MetadataArgs {
     hide    : boolean;
     name    : string;
     terms   : string;
-    twitter : string;
+    telegram : string;
+    jetton: string;
+    nft: string;
     website : string;
 }
 

@@ -70,10 +70,12 @@ export async function getDaoMetadata(client : TonClient, daoAddr: string): Promi
     const hide    = await metadataContract.getHide();
     const name    = await metadataContract.getName();
     const terms   = await metadataContract.getTerms();
-    const twitter = await metadataContract.getTwitter();
+    const telegram = await metadataContract.getTelegram();
     const website = await metadataContract.getWebsite();
+    const jetton = await metadataContract.getJetton();
+    const nft = await metadataContract.getNft();
 
-    return {about, avatar, github, hide, name, terms, twitter, website};
+    return {about, avatar, github, hide, name, terms, telegram, website, jetton: jetton.toString(), nft: nft.toString()};
 }
 
 export async function getDaoRoles(client : TonClient, daoAddr: string): Promise<{owner: string, proposalOwner: string}> {  

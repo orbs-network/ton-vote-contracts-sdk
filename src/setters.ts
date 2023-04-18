@@ -57,8 +57,9 @@ export async function newMetdata(sender: Sender, client : TonClient, metadataArg
     
     let metadataContract = client.open(await Metadata.fromInit(
         metadataArgs.avatar, metadataArgs.name, metadataArgs.about, 
-        metadataArgs.website, metadataArgs.terms, metadataArgs.twitter, 
-        metadataArgs.github, metadataArgs.hide));        
+        metadataArgs.website, metadataArgs.terms, metadataArgs.telegram, 
+        metadataArgs.github, Address.parse(metadataArgs.jetton), Address.parse(metadataArgs.nft),
+        metadataArgs.hide));        
     
     if (await client.isContractDeployed(metadataContract.address)) {
         console.log("Contract already deployed");
