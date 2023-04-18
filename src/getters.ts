@@ -6,6 +6,7 @@ import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
 import { TonClient, TonClient4, Address } from "ton";
 import { MetadataArgs, ProposalMetadata } from "./interfaces";
+import { ZERO_ADDR } from "@orbs-network/orbs-ethereum-contracts-v2/release/test/driver";
 
 
 export async function getRegistry(client : TonClient): Promise<string> {  
@@ -72,10 +73,21 @@ export async function getDaoMetadata(client : TonClient, daoAddr: string): Promi
     const terms   = await metadataContract.getTerms();
     const telegram = await metadataContract.getTelegram();
     const website = await metadataContract.getWebsite();
-    const jetton = await metadataContract.getJetton();
-    const nft = await metadataContract.getNft();
 
-    return {about, avatar, github, hide, name, terms, telegram, website, jetton: jetton.toString(), nft: nft.toString()};
+    let jetton;
+    let nft;
+    
+    try {
+        jetton = (await metadataContract.getJetton()).toString();
+        nft = (await metadataContract.getNft()).toString();
+    
+    } catch {
+        console.log('jetton and nft address are missing, setting to zero address');        
+        jetton = ZERO_ADDR;
+        nft = ZERO_ADDR;
+    }
+
+    return {about, avatar, github, hide, name, terms, telegram, website, jetton, nft};
 }
 
 export async function getDaoRoles(client : TonClient, daoAddr: string): Promise<{owner: string, proposalOwner: string}> {  
