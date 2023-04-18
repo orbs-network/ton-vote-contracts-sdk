@@ -71,20 +71,22 @@ export async function getDaoMetadata(client : TonClient, daoAddr: string): Promi
     const hide    = await metadataContract.getHide();
     const name    = await metadataContract.getName();
     const terms   = await metadataContract.getTerms();
-    const telegram = await metadataContract.getTelegram();
     const website = await metadataContract.getWebsite();
 
+    let telegram: string;
     let jetton: string;
     let nft: string;
     
     try {
+        telegram = await metadataContract.getTelegram();
         jetton = (await metadataContract.getJetton()).toString();
         nft = (await metadataContract.getNft()).toString();
     
     } catch {
-        console.log('jetton and nft address are missing, setting to zero address');        
-        jetton = ZERO_ADDR;
-        nft = ZERO_ADDR;
+        console.log('jetton and nft address are missing, setting to zero address');  
+        telegram = '';      
+        jetton = '';
+        nft = '';
     }
 
     return {about, avatar, github, hide, name, terms, telegram, website, jetton, nft};
@@ -152,7 +154,7 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
     let proposalAddresses: string[] = [];
 
     for (let id = startId; id < endProposalId; id++) {
-        let daoAddr = await proposalDeployer.getProposalAddr(BigInt(id));
+        let daoAddr = await proposalDeployer.getProposalAddr(BigInt(id));        
         proposalAddresses.push(daoAddr.toString());
     }
 
