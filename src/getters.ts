@@ -74,8 +74,8 @@ export async function getDaoMetadata(client : TonClient, daoAddr: string): Promi
     const telegram = await metadataContract.getTelegram();
     const website = await metadataContract.getWebsite();
 
-    let jetton;
-    let nft;
+    let jetton: string;
+    let nft: string;
     
     try {
         jetton = (await metadataContract.getJetton()).toString();
@@ -170,10 +170,18 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     const proposalSnapshotTime = Number(await proposal.getProposalSnapshotTime());
     const proposalType = Number(await proposal.getProposalType());
     const votingPowerStrategy = Number(await proposal.getVotingPowerStrategy());
-    const title = await proposal.getTitle();
-    const description = await proposal.getDescription();
-
     const mcSnapshotBlock = await getBlockFromTime(client4, Number(proposalSnapshotTime));
+
+    let title: string;
+    let description: string;
+    
+    try {
+        title = await proposal.getTitle();
+        description = await proposal.getDescription();    
+    } catch {
+        title = '';
+        description = '';
+    }
     
     return {id, owner, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, proposalType, votingPowerStrategy, title, description};
 }
