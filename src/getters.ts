@@ -158,10 +158,12 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     const proposalSnapshotTime = Number(await proposal.getProposalSnapshotTime());
     const proposalType = Number(await proposal.getProposalType());
     const votingPowerStrategy = Number(await proposal.getVotingPowerStrategy());
+    const title = await proposal.getTitle();
+    const description = await proposal.getDescription();
 
     const mcSnapshotBlock = await getBlockFromTime(client4, Number(proposalSnapshotTime));
     
-    return {id, owner, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, proposalType, votingPowerStrategy};
+    return {id, owner, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, proposalType, votingPowerStrategy, title, description};
 }
 
 async function getBlockFromTime(clientV4: TonClient4, utime: number): Promise<number> {

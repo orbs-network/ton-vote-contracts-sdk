@@ -34,6 +34,8 @@ export interface ProposalMetadata {
     proposalSnapshotTime: number;
     proposalType: number;
     votingPowerStrategy: number;
+    title: string;
+    description: string;
 }
 
 export interface Votes {
