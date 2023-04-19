@@ -6,7 +6,6 @@ import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
 import { TonClient, TonClient4, Address } from "ton";
 import { MetadataArgs, ProposalMetadata } from "./interfaces";
-import { ZERO_ADDR } from "@orbs-network/orbs-ethereum-contracts-v2/release/test/driver";
 
 
 export async function getRegistry(client : TonClient): Promise<string> {  
@@ -83,7 +82,6 @@ export async function getDaoMetadata(client : TonClient, daoAddr: string): Promi
         nft = (await metadataContract.getNft()).toString();
     
     } catch {
-        console.log('jetton and nft address are missing, setting to zero address');  
         telegram = '';      
         jetton = '';
         nft = '';

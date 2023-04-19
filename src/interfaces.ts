@@ -1,4 +1,5 @@
 import { Transaction } from "ton";
+import {VotingPowerStrategy} from "./voting-strategies";
 
 export interface TxData {
     allTxns: Transaction [], 
@@ -33,11 +34,11 @@ export interface ProposalMetadata {
     proposalEndTime: number;
     proposalSnapshotTime: number;
     proposalType: number;
-    votingPowerStrategy: number;
+    votingPowerStrategy: VotingPowerStrategy;
     title: string;
     description: string;
-    jetton: string;
-    nft: string;
+    jetton: string | undefined;
+    nft: string | undefined;
 }
 
 export interface Votes {

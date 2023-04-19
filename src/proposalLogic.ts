@@ -1,10 +1,14 @@
 import { getHttpEndpoint } from "@orbs-network/ton-access";
-import { Address, TonClient, TonClient4, Cell } from "ton";
+import { Address, TonClient, TonClient4, Cell, fromNano } from "ton";
 import BigNumber from "bignumber.js";
 import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
 import { Transaction } from 'ton-core';
 import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData } from "./interfaces";
+import {VotingPowerStrategy} from "./voting-strategies";
+import {addressStringToTupleItem, cellToAddress, intToTupleItem } from "./helpers";
+
+
 // import * as fs from 'fs';
 
 // const PROPOSAL_ABI = fs.readFileSync('./dist/contracts/output/ton-vote_Proposal.abi', 'utf-8');
@@ -135,7 +139,80 @@ export function getAllVotes(transactions: Transaction[], proposalMetadata: Propo
   return allVotes;
 }
 
-function getSingleVoterPower(voter: string, strategy: string = 'ton-balance') {
+async function getAllNftHolders(clientV4: TonClient4, collectionAddress: string, proposalMetadata: ProposalMetadata): Promise<Set<string>> {
+
+  let allNftItemsHolders = new Set<string>();
+
+  let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_collection_data');
+  
+  console.log(res);
+  if (res.result[0].type != 'int') {
+    console.log('Error: could not extract next-item-value from nft collection (type error)');
+    return allNftItemsHolders;
+  }
+
+  const nextItemIndex = res.result[0].value;
+
+  for (let i = 0; i < nextItemIndex; i++) {
+    res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_nft_address_by_index', intToTupleItem(i));
+
+    if (res.result[0].type != 'slice') {
+        continue;
+    }
+    let nftItemAddress = cellToAddress(res.result[0].cell);
+    
+    res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
+    
+    if (res.result[0].type != 'slice') {
+      continue;
+    }
+
+    allNftItemsHolders.add(cellToAddress(res.result[0].cell).toString());
+  }
+
+  return allNftItemsHolders;
+}
+
+async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategy, allNftItemsHolders: Set<string> = new Set()): Promise<string> {
+
+  if (strategy == VotingPowerStrategy.TonBalance) {
+    return (
+      await clientV4.getAccountLite(
+        proposalMetadata.mcSnapshotBlock,
+        Address.parse(voter)
+      )
+    ).account.balance.coins;
+  }
+
+  else if (strategy == VotingPowerStrategy.JettonBalance) {
+
+    let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.jetton!), 'get_wallet_address', addressStringToTupleItem(voter));
+    
+    if (res.result[0].type != 'slice') {
+        return '0';
+    }
+    
+    const jettonWalletAddress = cellToAddress(res.result[0].cell);
+
+    res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, jettonWalletAddress, 'get_wallet_data');
+        
+    if (res.result[0].type != 'int') {
+        return '0';
+    }
+        
+    return fromNano(res.result[0].value).toString();
+  }
+
+  else if (strategy == VotingPowerStrategy.NftCcollection) {
+    
+    if (voter in allNftItemsHolders) {
+      return '1';
+    }
+
+    return '0';
+  }
+
+  return '0';
 
 }
 
@@ -143,7 +220,8 @@ export async function getVotingPower(
   clientV4: TonClient4,
   proposalMetadata: ProposalMetadata,
   transactions: Transaction[],
-  votingPower: VotingPower = {}
+  votingPower: VotingPower = {},
+  strategy: VotingPowerStrategy =  VotingPowerStrategy.TonBalance
 ): Promise<VotingPower> {
   let voters = Object.keys(getAllVotes(transactions, proposalMetadata));
 
@@ -154,12 +232,7 @@ export async function getVotingPower(
   if (!proposalMetadata.mcSnapshotBlock) return votingPower;
 
   for (const voter of newVoters) {
-    votingPower[voter] = (
-      await clientV4.getAccountLite(
-        proposalMetadata.mcSnapshotBlock,
-        Address.parse(voter)
-      )
-    ).account.balance.coins;
+    votingPower[voter] = await getSingleVoterPower(clientV4, voter, proposalMetadata, strategy);
   }
 
   return votingPower;

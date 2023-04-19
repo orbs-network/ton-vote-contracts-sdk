@@ -14,6 +14,8 @@ const PROPOSAL_DEPLOY_VALUE = "0.25";
 const SET_OWNER_DEPLOY_VALUE = "0.25";
 const SET_PROPOSAL_OWNER_DEPLOY_VALUE = "0.25";
 
+const ZERO_ADDR = 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c';
+
 
 export async function newDao(sender: Sender, client : TonClient, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
 
@@ -129,8 +131,8 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: s
                         votingPowerStrategy: BigInt(proposalMetadata.votingPowerStrategy),
                         title: proposalMetadata.title,
                         description: proposalMetadata.description,
-                        jetton: Address.parse(proposalMetadata.jetton),
-                        nft: Address.parse(proposalMetadata.nft)
+                        jetton: Address.parse(proposalMetadata.jetton || ZERO_ADDR),
+                        nft: Address.parse(proposalMetadata.nft || ZERO_ADDR)
                     }
                 })).endCell(),
                 code: code,

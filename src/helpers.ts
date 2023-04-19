@@ -4,7 +4,7 @@ import {
   OpenedContract
 } from "ton";
 import { mnemonicNew, mnemonicToWalletKey } from "ton-crypto";
-import { TonClient, WalletContractV3R2, fromNano } from "ton";
+import { TonClient, WalletContractV3R2, fromNano, beginCell, TupleItem , TupleBuilder, TupleItemInt } from "ton";
 import fs from "fs";
 import {execSync} from "child_process";
 
@@ -154,3 +154,17 @@ export async function getSeqno(client: TonClient, address: string): Promise<bigi
   
   return null
 }
+
+export function addressStringToTupleItem(address: string): TupleItem[] {
+  let tupleBuilder = new TupleBuilder();
+  tupleBuilder.writeSlice(beginCell().storeAddress(Address.parse(address)).endCell());
+  return tupleBuilder.build();
+}
+
+export function intToTupleItem(value: number): TupleItem[] {
+  return [{'type': 'int', value: BigInt(value)}]
+}
+
+export function cellToAddress(cell :Cell): Address {
+  return cell.beginParse().loadAddress();
+}  
