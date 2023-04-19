@@ -202,21 +202,29 @@ async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposal
 
   else if (strategy == VotingPowerStrategy.JettonBalance) {
 
-    let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.jetton!), 'get_wallet_address', addressStringToTupleItem(voter));
-    
-    if (res.result[0].type != 'slice') {
-        return '0';
-    }
-    
-    const jettonWalletAddress = cellToAddress(res.result[0].cell);
+    try {
 
-    res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, jettonWalletAddress, 'get_wallet_data');
-        
-    if (res.result[0].type != 'int') {
-        return '0';
+      let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.jetton!), 'get_wallet_address', addressStringToTupleItem(voter));
+      
+      if (res.result[0].type != 'slice') {
+          return '0';
+      }
+      
+      const jettonWalletAddress = cellToAddress(res.result[0].cell);
+
+      res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, jettonWalletAddress, 'get_wallet_data');
+          
+      if (res.result[0].type != 'int') {
+          return '0';
+      }
+          
+      return fromNano(res.result[0].value).toString();
+
+    } catch {
+      
+      return '0'
     }
-        
-    return fromNano(res.result[0].value).toString();
+
   }
 
   else if (strategy == VotingPowerStrategy.NftCcollection) {
@@ -248,6 +256,8 @@ export async function getVotingPower(
 
   if (!proposalMetadata.mcSnapshotBlock) return votingPower;
 
+  console.log(`strategy: ${strategy}, nftItemsHolders: ${nftItemsHolders}`);
+  
   for (const voter of newVoters) {
     votingPower[voter] = await getSingleVoterPower(clientV4, voter, proposalMetadata, strategy, nftItemsHolders);
   }

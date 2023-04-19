@@ -19,7 +19,8 @@ export async function getDaos(client : TonClient, nextId: null | number = null, 
     return getDaosAsc(client, nextId, batchSize);
 }
 
-async function getDaosDesc(client : TonClient, startId: null | number = null, batchSize=10): Promise<{endDaoId: number, daoAddresses: string[]}> {  
+// TODO: FIXME
+async function getDaosDesc(client : TonClient, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
 
   let registryContract = client.open(await Registry.fromInit());
   let daoAddresses: string[] = [];
@@ -30,15 +31,21 @@ async function getDaosDesc(client : TonClient, startId: null | number = null, ba
 
   const endDaoId = Math.max(0, startId - batchSize + 1);
 
-  for (let id = startId; id >= endDaoId; id--) {
-    let daoAddr = await registryContract.getDaoAddress(BigInt(id));
-    daoAddresses.push(daoAddr.toString());
+  for (let i = startId; i >= endDaoId; i -= batchSize) {
+    const batchStart = Math.max(i - batchSize + 1, endDaoId);
+    const batchEnd = i + 1;
+    const promises = [];
+    for (let id = batchStart; id < batchEnd; id++) {
+      promises.push(registryContract.getDaoAddress(BigInt(id)));
+    }
+    const results = await Promise.all(promises);
+    daoAddresses.push(...results.map(addr => addr.toString()));
   }
-
+    
   return {endDaoId: endDaoId-1, daoAddresses};
 }
 
-async function getDaosAsc(client : TonClient, startId: null | number = null, batchSize=10): Promise<{endDaoId: number, daoAddresses: string[]}> {  
+async function getDaosAsc(client : TonClient, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
 
     let registryContract = client.open(await Registry.fromInit());
     let daoAddresses: string[] = [];
@@ -48,14 +55,24 @@ async function getDaosAsc(client : TonClient, startId: null | number = null, bat
     }
   
     const endDaoId = Math.min(Number(await registryContract.getNextDaoId()), startId + batchSize);
-  
-    for (let id = startId; id < endDaoId; id++) {
-      let daoAddr = await registryContract.getDaoAddress(BigInt(id));
-      daoAddresses.push(daoAddr.toString());
+
+    let batchCount = Math.ceil((endDaoId - startId) / batchSize);
+    
+    for (let batchIndex = 0; batchIndex < batchCount; batchIndex++) {
+      let batchStart = startId + batchIndex * batchSize;
+      let batchEnd = Math.min(startId + (batchIndex + 1) * batchSize, endDaoId);
+    
+      let promises = [];
+    
+      for (let id = batchStart; id < batchEnd; id++) {
+        promises.push(registryContract.getDaoAddress(BigInt(id)).then(daoAddr => daoAddresses.push(daoAddr.toString())));
+      }
+    
+      await Promise.all(promises);
     }
-  
+          
     return {endDaoId, daoAddresses: daoAddresses};
-  }
+}
   
 export async function getDaoMetadata(client : TonClient, daoAddr: string): Promise<MetadataArgs> {  
 
@@ -64,29 +81,19 @@ export async function getDaoMetadata(client : TonClient, daoAddr: string): Promi
 
     const metadataContract = client.open(Metadata.fromAddress(metadataAddr));
     
-    const about   = await metadataContract.getAbout();
-    const avatar  = await metadataContract.getAvatar();
-    const github  = await metadataContract.getGithub();
-    const hide    = await metadataContract.getHide();
-    const name    = await metadataContract.getName();
-    const terms   = await metadataContract.getTerms();
-    const website = await metadataContract.getWebsite();
-
-    let telegram: string;
-    let jetton: string;
-    let nft: string;
+    const [about, avatar, github, hide, name, terms, website, telegram, jetton, nft] = await Promise.all([
+        metadataContract.getAbout(),
+        metadataContract.getAvatar(),
+        metadataContract.getGithub(),
+        metadataContract.getHide(),
+        metadataContract.getName(),
+        metadataContract.getTerms(),
+        metadataContract.getWebsite(),
+        metadataContract.getTelegram().catch(() => ''),
+        metadataContract.getJetton().then(j => j.toString()).catch(() => ''),
+        metadataContract.getNft().then(n => n.toString()).catch(() => ''),
+    ]);
     
-    try {
-        telegram = await metadataContract.getTelegram();
-        jetton = (await metadataContract.getJetton()).toString();
-        nft = (await metadataContract.getNft()).toString();
-    
-    } catch {
-        telegram = '';      
-        jetton = '';
-        nft = '';
-    }
-
     return {about, avatar, github, hide, name, terms, telegram, website, jetton, nft};
 }
 
@@ -94,8 +101,10 @@ export async function getDaoRoles(client : TonClient, daoAddr: string): Promise<
 
     let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
 
-    const owner = (await daoContract.getOwner()).toString();
-    const proposalOwner = (await daoContract.getProposalOwner()).toString();
+    const [owner, proposalOwner] = await Promise.all([
+        daoContract.getOwner(),  
+        daoContract.getProposalOwner()
+    ].map(p => p.then(p => p.toString())));
 
     return {owner, proposalOwner};
 }
@@ -129,9 +138,22 @@ async function getDaoProposalsDesc(client : TonClient, daoAddr: string, startId:
 
     let proposalAddresses: string[] = [];
 
-    for (let id = startId; id >= endProposalId; id--) {
-        let daoAddr = await proposalDeployer.getProposalAddr(BigInt(id));
-        proposalAddresses.push(daoAddr.toString());
+    const numBatches = Math.ceil((startId - endProposalId + 1) / batchSize);
+    
+    for (let batchIndex = 0; batchIndex < numBatches; batchIndex++) {
+
+        const batchStartId = startId - batchIndex * batchSize;
+        const batchEndId = Math.max(batchStartId - batchSize, endProposalId - 1);
+    
+        const batchPromises: Promise<void>[] = [];
+        for (let id = batchStartId; id > batchEndId; id--) {
+            const daoAddrPromise = proposalDeployer.getProposalAddr(BigInt(id)).then((daoAddr) => {
+            proposalAddresses.push(daoAddr.toString());
+            });
+            batchPromises.push(daoAddrPromise);
+        }
+        
+        await Promise.all(batchPromises);
     }
 
     return {endProposalId: endProposalId-1, proposalAddresses};
@@ -151,9 +173,17 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
 
     let proposalAddresses: string[] = [];
 
-    for (let id = startId; id < endProposalId; id++) {
-        let daoAddr = await proposalDeployer.getProposalAddr(BigInt(id));        
-        proposalAddresses.push(daoAddr.toString());
+    for (let batchStart = startId; batchStart < endProposalId; batchStart += batchSize) {
+    
+        const batchEnd = Math.min(batchStart + batchSize, endProposalId);
+        const batchPromises = [];
+    
+        for (let id = batchStart; id < batchEnd; id++) {
+          batchPromises.push(proposalDeployer.getProposalAddr(BigInt(id)));
+        }
+    
+        const batchResults = await Promise.all(batchPromises);
+        proposalAddresses.push(...batchResults.map((addr) => addr.toString()));
     }
 
     return {endProposalId, proposalAddresses};
@@ -162,6 +192,25 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
 
 export async function getProposalMetadata(client : TonClient, client4: TonClient4, proposalAddr: string): Promise<ProposalMetadata> {
     let proposal = client.open(Proposal.fromAddress(Address.parse(proposalAddr)));
+
+    // const [id,  owner,  proposalStartTime,  proposalEndTime,  
+    //     proposalSnapshotTime,  proposalType,  votingPowerStrategy,  
+    //     title,  description,  jetton,  nft
+    // ] = await Promise.all([
+    //     proposal.getId().then((id) => Number(id)),
+    //     proposal.getOwner().then((owner) => String(owner)),
+    //     proposal.getProposalStartTime().then((start) => Number(start)),
+    //     proposal.getProposalEndTime().then((end) => Number(end)),
+    //     proposal.getProposalSnapshotTime().then((snapshot) => Number(snapshot)),
+    //     proposal.getProposalType().then((type) => Number(type)),
+    //     proposal.getVotingPowerStrategy().then((strategy) => Number(strategy)),
+    //     proposal.getTitle(),
+    //     proposal.getDescription(),
+    //     proposal.getJetton().then((jetton) => String(jetton)),
+    //     proposal.getNft().then((nft) => String(nft)),
+    // ]);
+      
+    // const mcSnapshotBlock = await getBlockFromTime(client4, proposalSnapshotTime);
 
     const id = Number(await proposal.getId());
     const owner = (await proposal.getOwner()).toString();
@@ -176,7 +225,7 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     const description = await proposal.getDescription();    
     const jetton = (await proposal.getJetton()).toString();    
     const nft = (await proposal.getNft()).toString();    
-    
+
     return {id, owner, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, 
         proposalType, votingPowerStrategy, title, description, jetton, nft};
 }
