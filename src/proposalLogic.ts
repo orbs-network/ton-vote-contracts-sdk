@@ -150,33 +150,46 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
     return allNftItemsHolders;
   }
 
-  const nextItemIndex = res.result[0].value;
+  const nextItemIndex = Number(res.result[0].value);
 
-  for (let i = 0; i < nextItemIndex; i++) {
-      
-    res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_nft_address_by_index', intToTupleItem(i));
+  const batchSize = 100; // set the batch size
+  const batches = Math.ceil(nextItemIndex / batchSize); // calculate the number of batches
+  
+  console.log(`fetching ${nextItemIndex} nft items (batche size = ${batchSize}`);
+  
+  for (let i = 0; i < batches; i++) {
+
+    const batchStartIndex = i * batchSize;
+    const batchEndIndex = Math.min((i + 1) * batchSize, nextItemIndex);
+  
+    await Promise.all(Array.from({ length: batchEndIndex - batchStartIndex }, (_, j) => {
+      const index = batchStartIndex + j;
+      return (async () => {
+        let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_nft_address_by_index', intToTupleItem(index));
+        
+        if (res.result[0].type != 'slice') {
+          console.log(`unexpected result type from runMethod on get_nft_address_by_index on address: ${proposalMetadata.nft} at block ${proposalMetadata.mcSnapshotBlock}`);
+          return;
+        }
     
-    if (res.result[0].type != 'slice') {
-      console.log(`unexpepcted result type from runMethod on get_nft_address_by_index on address: ${proposalMetadata.nft} at block ${proposalMetadata.mcSnapshotBlock}`);
-      continue;
-    }
-
-    let nftItemAddress = cellToAddress(res.result[0].cell);
-          
-    res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
-
-    if (res.result[3].type != 'slice') {
-      console.log(`unexpepcted result type from runMethod on get_nft_data on address: ${proposalMetadata.nft} at block ${proposalMetadata.mcSnapshotBlock}`);
-      continue;
-    }
+        let nftItemAddress = cellToAddress(res.result[0].cell);
+              
+        res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
     
-    allNftItemsHolders.add(cellToAddress(res.result[3].cell).toString());
+        if (res.result[3].type != 'slice') {
+          console.log(`unexpected result type from runMethod on get_nft_data on address: ${proposalMetadata.nft} at block ${proposalMetadata.mcSnapshotBlock}`);
+          return;
+        }
+        
+        allNftItemsHolders.add(cellToAddress(res.result[3].cell).toString());
+      })();
+    }));
   }
-    
-  return allNftItemsHolders;  
+  
+  return allNftItemsHolders;
 }
 
-async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategy, allNftItemsHolders: Set<string> = new Set()): Promise<string> {
+async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategy, allNftItemsHolders: Set<string>): Promise<string> {
 
   if (strategy == VotingPowerStrategy.TonBalance) {
     return (
@@ -224,7 +237,8 @@ export async function getVotingPower(
   proposalMetadata: ProposalMetadata,
   transactions: Transaction[],
   votingPower: VotingPower = {},
-  strategy: VotingPowerStrategy =  VotingPowerStrategy.TonBalance
+  strategy: VotingPowerStrategy =  VotingPowerStrategy.TonBalance,
+  nftItemsHolders: Set<string> = new Set() 
 ): Promise<VotingPower> {
   let voters = Object.keys(getAllVotes(transactions, proposalMetadata));
 
@@ -235,7 +249,7 @@ export async function getVotingPower(
   if (!proposalMetadata.mcSnapshotBlock) return votingPower;
 
   for (const voter of newVoters) {
-    votingPower[voter] = await getSingleVoterPower(clientV4, voter, proposalMetadata, strategy);
+    votingPower[voter] = await getSingleVoterPower(clientV4, voter, proposalMetadata, strategy, nftItemsHolders);
   }
 
   return votingPower;
