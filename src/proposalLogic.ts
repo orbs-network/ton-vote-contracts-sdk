@@ -139,13 +139,12 @@ export function getAllVotes(transactions: Transaction[], proposalMetadata: Propo
   return allVotes;
 }
 
-async function getAllNftHolders(clientV4: TonClient4, collectionAddress: string, proposalMetadata: ProposalMetadata): Promise<Set<string>> {
+export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<Set<string>> {
 
   let allNftItemsHolders = new Set<string>();
 
   let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_collection_data');
   
-  console.log(res);
   if (res.result[0].type != 'int') {
     console.log('Error: could not extract next-item-value from nft collection (type error)');
     return allNftItemsHolders;
@@ -154,23 +153,27 @@ async function getAllNftHolders(clientV4: TonClient4, collectionAddress: string,
   const nextItemIndex = res.result[0].value;
 
   for (let i = 0; i < nextItemIndex; i++) {
+      
     res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_nft_address_by_index', intToTupleItem(i));
-
-    if (res.result[0].type != 'slice') {
-        continue;
-    }
-    let nftItemAddress = cellToAddress(res.result[0].cell);
-    
-    res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
     
     if (res.result[0].type != 'slice') {
+      console.log(`unexpepcted result type from runMethod on get_nft_address_by_index on address: ${proposalMetadata.nft} at block ${proposalMetadata.mcSnapshotBlock}`);
       continue;
     }
 
-    allNftItemsHolders.add(cellToAddress(res.result[0].cell).toString());
-  }
+    let nftItemAddress = cellToAddress(res.result[0].cell);
+          
+    res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
 
-  return allNftItemsHolders;
+    if (res.result[3].type != 'slice') {
+      console.log(`unexpepcted result type from runMethod on get_nft_data on address: ${proposalMetadata.nft} at block ${proposalMetadata.mcSnapshotBlock}`);
+      continue;
+    }
+    
+    allNftItemsHolders.add(cellToAddress(res.result[3].cell).toString());
+  }
+    
+  return allNftItemsHolders;  
 }
 
 async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategy, allNftItemsHolders: Set<string> = new Set()): Promise<string> {
