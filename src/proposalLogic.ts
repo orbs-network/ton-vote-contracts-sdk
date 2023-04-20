@@ -1,5 +1,5 @@
 import { getHttpEndpoint } from "@orbs-network/ton-access";
-import { Address, TonClient, TonClient4, Cell, fromNano } from "ton";
+import { Address, TonClient, TonClient4, Cell, toNano } from "ton";
 import BigNumber from "bignumber.js";
 import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
@@ -230,7 +230,7 @@ async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposal
   else if (strategy == VotingPowerStrategy.NftCcollection) {
     
     if (voter in allNftItemsHolders) {
-      return '1';
+      return toNano('1').toString();
     }
 
     return '0';
