@@ -218,10 +218,10 @@ async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposal
           return '0';
       }
           
-      return fromNano(res.result[0].value).toString();
+      return res.result[0].value.toString();
 
     } catch {
-      
+
       return '0'
     }
 
