@@ -229,7 +229,7 @@ async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposal
 
   else if (strategy == VotingPowerStrategy.NftCcollection) {
     
-    if (voter in allNftItemsHolders) {
+    if (allNftItemsHolders.has(voter)) {
       return toNano('1').toString();
     }
 
