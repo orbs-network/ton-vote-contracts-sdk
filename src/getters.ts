@@ -248,4 +248,20 @@ async function getBlockFromTime(clientV4: TonClient4, utime: number): Promise<nu
   
     return -1;
 }
-  
+
+export async function metdataExists(client : TonClient, metadataArgs: MetadataArgs): Promise<boolean> {  
+    
+    let metadataContract = client.open(await Metadata.fromInit(
+        metadataArgs.avatar, metadataArgs.name, metadataArgs.about, 
+        metadataArgs.website, metadataArgs.terms, metadataArgs.telegram, 
+        metadataArgs.github, Address.parse(metadataArgs.jetton), Address.parse(metadataArgs.nft),
+        metadataArgs.hide));        
+    
+    if (await client.isContractDeployed(metadataContract.address)) {
+        return true;
+
+    } else {
+        return false;
+    }
+    
+}
