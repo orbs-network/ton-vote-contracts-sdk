@@ -144,7 +144,12 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
   let allNftItemsHolders = new Set<string>();
 
   let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_collection_data');
-  
+
+  if (!res.result) {
+    console.log('nft collection not exists');
+    return allNftItemsHolders;
+  }
+    
   if (res.result[0].type != 'int') {
     console.log('Error: could not extract next-item-value from nft collection (type error)');
     return allNftItemsHolders;
