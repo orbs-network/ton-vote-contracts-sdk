@@ -145,7 +145,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
 
   let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_collection_data');
 
-  if (!res.result) {
+  if (!res.result.length) {
     console.log('nft collection not exists');
     return allNftItemsHolders;
   }
