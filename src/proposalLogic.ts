@@ -194,7 +194,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
   return allNftItemsHolders;
 }
 
-async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategy, allNftItemsHolders: Set<string>): Promise<string> {
+export async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategy, allNftItemsHolders: Set<string>): Promise<string> {
 
   if (strategy == VotingPowerStrategy.TonBalance) {
     return (
@@ -268,19 +268,6 @@ export async function getVotingPower(
   }
 
   return votingPower;
-}
-
-export async function getSingleVotingPower(
-  clientV4: TonClient4,
-  mcSnapshotBlock: number,
-  address: string
-): Promise<string> {
-    return (
-      await clientV4.getAccountLite(
-        mcSnapshotBlock,
-        Address.parse(address)
-      )
-    ).account.balance.coins;
 }
 
 export function calcProposalResult(votes: Votes, votingPower: VotingPower): ProposalResult {
