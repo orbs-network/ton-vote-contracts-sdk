@@ -1,7 +1,7 @@
 {
-  "name": "ton-vote-sdk",
+  "name": "ton-vote-contracts-sdk",
   "description": "sdk for ton vote contracts",
-  "version": "3.7.4",
+  "version": "1.0.0-beta.0",
   "license": "MIT",
   "author": "Ami Hazbany",
   "main": "dist/src/index.js",
