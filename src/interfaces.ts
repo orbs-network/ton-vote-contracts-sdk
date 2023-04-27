@@ -25,6 +25,16 @@ export interface MetadataArgs {
     website : string;
 }
 
+export enum VotingSystemType {
+    UNDEFINED = -1,
+    CHOOSE_EXACTLY_ONE = 0
+}
+
+export interface VotingSystem {
+    choices: string[],
+    votingSystemType: VotingSystemType
+}
+
 export interface ProposalMetadata {
 
     id: number;
@@ -33,7 +43,7 @@ export interface ProposalMetadata {
     proposalStartTime: number;
     proposalEndTime: number;
     proposalSnapshotTime: number;
-    proposalType: number;
+    votingSystem: VotingSystem;
     votingPowerStrategy: VotingPowerStrategy;
     title: string;
     description: string;

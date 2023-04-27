@@ -146,7 +146,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
   let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_collection_data');
 
   if (!res.result.length) {
-    console.log('nft collection not exists');
+    console.log('nft collection not exists for proposal with metadata: ', proposalMetadata);
     return allNftItemsHolders;
   }
     
@@ -160,7 +160,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
   const batchSize = 100; // set the batch size
   const batches = Math.ceil(nextItemIndex / batchSize); // calculate the number of batches
   
-  console.log(`fetching ${nextItemIndex} nft items (batche size = ${batchSize}`);
+  console.log(`fetching ${nextItemIndex} nft items (batche size = ${batchSize})`);
   
   for (let i = 0; i < batches; i++) {
 

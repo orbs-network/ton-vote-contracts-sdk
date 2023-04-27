@@ -5,7 +5,7 @@ import { Metadata } from '../contracts/output/ton-vote_Metadata';
 import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
 import { TonClient, TonClient4, Address } from "ton";
-import { MetadataArgs, ProposalMetadata } from "./interfaces";
+import { MetadataArgs, ProposalMetadata, VotingSystem, VotingSystemType } from "./interfaces";
 
 
 export async function getRegistry(client : TonClient): Promise<string> {  
@@ -189,6 +189,29 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
     return {endProposalId, proposalAddresses};
 }
 
+export function extractVotingSystem(votingSystemStr: string): VotingSystem {
+
+    try {
+        const votingSystem = JSON.parse(votingSystemStr);
+        if (('choices' in votingSystem) || ('votingSystemType' in votingSystem)) {
+            return {
+                choices: [],
+                votingSystemType: VotingSystemType.UNDEFINED
+            }
+        }
+
+        return votingSystem as VotingSystem;
+
+    } catch(err) {
+        console.log('failed to extract voting system from str: ', votingSystemStr);
+        console.error(err);
+        return {
+            choices: [],
+            votingSystemType: VotingSystemType.UNDEFINED
+        }
+    }
+
+}
 
 export async function getProposalMetadata(client : TonClient, client4: TonClient4, proposalAddr: string): Promise<ProposalMetadata> {
     let proposal = client.open(Proposal.fromAddress(Address.parse(proposalAddr)));
@@ -217,7 +240,7 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     const proposalStartTime = Number(await proposal.getProposalStartTime());
     const proposalEndTime = Number(await proposal.getProposalEndTime());
     const proposalSnapshotTime = Number(await proposal.getProposalSnapshotTime());
-    const proposalType = Number(await proposal.getProposalType());
+    const votingSystem = extractVotingSystem(await proposal.getVotingSystem());
     const votingPowerStrategy = Number(await proposal.getVotingPowerStrategy());
     const mcSnapshotBlock = await getBlockFromTime(client4, Number(proposalSnapshotTime));
     
@@ -227,7 +250,7 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     const nft = (await proposal.getNft()).toString();    
 
     return {id, owner, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, 
-        proposalType, votingPowerStrategy, title, description, jetton, nft};
+        votingSystem, votingPowerStrategy, title, description, jetton, nft};
 }
 
 async function getBlockFromTime(clientV4: TonClient4, utime: number): Promise<number> {
