@@ -127,7 +127,7 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: s
                         proposalStartTime: BigInt(proposalMetadata.proposalStartTime),
                         proposalEndTime: BigInt(proposalMetadata.proposalEndTime),
                         proposalSnapshotTime: BigInt(proposalMetadata.proposalSnapshotTime),
-                        votingSystem: proposalMetadata.votingSystem.toString(),
+                        votingSystem: JSON.stringify(proposalMetadata.votingSystem),
                         votingPowerStrategy: BigInt(proposalMetadata.votingPowerStrategy),
                         title: proposalMetadata.title,
                         description: proposalMetadata.description,

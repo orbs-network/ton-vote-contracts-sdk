@@ -190,8 +190,8 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
 }
 
 export function extractVotingSystem(votingSystemStr: string): VotingSystem {
-
-    try {
+    
+    try {        
         const votingSystem = JSON.parse(votingSystemStr);
         if (('choices' in votingSystem) || ('votingSystemType' in votingSystem)) {
             return {
