@@ -1,5 +1,4 @@
 import { Transaction } from "ton";
-import {VotingPowerStrategy} from "./voting-strategies";
 
 export interface TxData {
     allTxns: Transaction [], 
@@ -35,6 +34,31 @@ export interface VotingSystem {
     votingSystemType: VotingSystemType
 }
 
+export enum VotingPowerStrategyType {
+    UNDEFINED = -1,
+    TonBalance = 0, 
+    JettonBalance = 1, 
+    NftCcollection = 2
+};
+
+/*
+examples: 
+{name: 'blacklist', type: 'string', list: true, value: 'EQBeHRBlsDK-2ZGlmRb7D_WwOY0gObuXrkRb-RC_TWI2Awll, EQBXOjSadD0rTzWTESeHroy33SlcbqBkYSCmA02dEgMIcv0G'}
+{name: 'jetton-address', type: 'string', list: false, value: 'EQBeHRBlsDK-2ZGlmRb7D_WwOY0gObuXrkRb-RC_TWI2Awll'}
+{name: 'ids', type: 'number', list: true, value: '0, 1, 2'}
+*/
+export interface VotingPowerStrategyArg {
+    name: string, 
+    type: string, // the type of the arg (e.g.: number)
+    list: boolean, // could be a list, list should be seperated with commas
+    value: string // value of the args
+}
+
+export interface VotingPowerStrategy {
+    type: VotingPowerStrategyType,
+    arguments: VotingPowerStrategyArg[]
+}
+
 export interface ProposalMetadata {
 
     id: number;
@@ -44,11 +68,9 @@ export interface ProposalMetadata {
     proposalEndTime: number;
     proposalSnapshotTime: number;
     votingSystem: VotingSystem;
-    votingPowerStrategy: VotingPowerStrategy;
+    votingPowerStrategies: VotingPowerStrategy[];
     title: string;
     description: string;
-    jetton: string | undefined;
-    nft: string | undefined;
 }
 
 export interface Votes {

@@ -5,7 +5,7 @@ import { Metadata } from '../contracts/output/ton-vote_Metadata';
 import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
 import { TonClient, TonClient4, Address } from "ton";
-import { MetadataArgs, ProposalMetadata, VotingSystem, VotingSystemType } from "./interfaces";
+import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType } from "./interfaces";
 
 
 export async function getRegistry(client : TonClient): Promise<string> {  
@@ -190,10 +190,10 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
 }
 
 export function extractVotingSystem(votingSystemStr: string): VotingSystem {
-    
+
     try {        
         const votingSystem = JSON.parse(votingSystemStr);
-        if (('choices' in votingSystem) || ('votingSystemType' in votingSystem)) {
+        if (!('choices' in votingSystem) || !('votingSystemType' in votingSystem)) {
             return {
                 choices: [],
                 votingSystemType: VotingSystemType.UNDEFINED
@@ -209,6 +209,42 @@ export function extractVotingSystem(votingSystemStr: string): VotingSystem {
             choices: [],
             votingSystemType: VotingSystemType.UNDEFINED
         }
+    }
+
+}
+
+export function extractVotingPowerStrategies(votingPowerStrategiesStr: string): VotingPowerStrategy[] {
+
+    try {        
+        const votingPowerStrategies = JSON.parse(votingPowerStrategiesStr);
+        if (!Array.isArray(votingPowerStrategies)) {
+            console.log('failed to extract voting power strategies from str: ', votingPowerStrategiesStr);
+            return [{
+                type: VotingPowerStrategyType.UNDEFINED,
+                arguments: []
+            }]
+        }
+        for (let i = 0; i < votingPowerStrategies.length; i++) {
+            if (!('type' in votingPowerStrategies[i]) || !('arguments' in votingPowerStrategies[i])) {
+                console.log('failed to extract voting power strategies from str: ', votingPowerStrategiesStr);
+
+                return [{
+                    type: VotingPowerStrategyType.UNDEFINED,
+                    arguments: []
+                }]    
+            }                
+        }
+
+        return votingPowerStrategies;
+
+    } catch(err) {
+        console.log('failed to extract voting power strategies from str: ', votingPowerStrategiesStr);
+        console.error(err);
+        return [{
+            type: VotingPowerStrategyType.UNDEFINED,
+            arguments: []
+        }]
+
     }
 
 }
@@ -241,16 +277,14 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     const proposalEndTime = Number(await proposal.getProposalEndTime());
     const proposalSnapshotTime = Number(await proposal.getProposalSnapshotTime());
     const votingSystem = extractVotingSystem(await proposal.getVotingSystem());
-    const votingPowerStrategy = Number(await proposal.getVotingPowerStrategy());
+    const votingPowerStrategies = extractVotingPowerStrategies(await proposal.getVotingPowerStrategies());
     const mcSnapshotBlock = await getBlockFromTime(client4, Number(proposalSnapshotTime));
     
     const title = await proposal.getTitle();
     const description = await proposal.getDescription();    
-    const jetton = (await proposal.getJetton()).toString();    
-    const nft = (await proposal.getNft()).toString();    
 
     return {id, owner, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, 
-        votingSystem, votingPowerStrategy, title, description, jetton, nft};
+        votingSystem, votingPowerStrategies, title, description};
 }
 
 async function getBlockFromTime(clientV4: TonClient4, utime: number): Promise<number> {

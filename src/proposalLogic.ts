@@ -4,8 +4,7 @@ import BigNumber from "bignumber.js";
 import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
 import { Transaction } from 'ton-core';
-import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData } from "./interfaces";
-import {VotingPowerStrategy} from "./voting-strategies";
+import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData, VotingPowerStrategy, VotingPowerStrategyType } from "./interfaces";
 import {addressStringToTupleItem, cellToAddress, intToTupleItem } from "./helpers";
 
 
@@ -139,11 +138,20 @@ export function getAllVotes(transactions: Transaction[], proposalMetadata: Propo
   return allVotes;
 }
 
+function extractValueFromStrategy(votingPowerStrategies: VotingPowerStrategy[], strategyTypeFilter: VotingPowerStrategyType, nameFilter: string): string | undefined {
+
+  const votingPowerStrategy = votingPowerStrategies.find((arg) => arg.type == strategyTypeFilter);
+  if (!votingPowerStrategy) return;
+
+  const nftArg = votingPowerStrategy.arguments.find((arg) => arg.name === nameFilter);
+  return nftArg ? nftArg.value : undefined;
+} 
+
 export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<Set<string>> {
 
   let allNftItemsHolders = new Set<string>();
-
-  let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_collection_data');
+  const nftAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.NftCcollection, 'nft-address');
+  let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(nftAddress!), 'get_collection_data');
 
   if (!res.result.length) {
     console.log('nft collection not exists for proposal with metadata: ', proposalMetadata);
@@ -170,10 +178,10 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
     await Promise.all(Array.from({ length: batchEndIndex - batchStartIndex }, (_, j) => {
       const index = batchStartIndex + j;
       return (async () => {
-        let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.nft!), 'get_nft_address_by_index', intToTupleItem(index));
+        let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(nftAddress!), 'get_nft_address_by_index', intToTupleItem(index));
         
         if (res.result[0].type != 'slice') {
-          console.log(`unexpected result type from runMethod on get_nft_address_by_index on address: ${proposalMetadata.nft} at block ${proposalMetadata.mcSnapshotBlock}`);
+          console.log(`unexpected result type from runMethod on get_nft_address_by_index on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
           return;
         }
     
@@ -182,7 +190,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
         res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
     
         if (res.result[3].type != 'slice') {
-          console.log(`unexpected result type from runMethod on get_nft_data on address: ${proposalMetadata.nft} at block ${proposalMetadata.mcSnapshotBlock}`);
+          console.log(`unexpected result type from runMethod on get_nft_data on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
           return;
         }
         
@@ -194,9 +202,9 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
   return allNftItemsHolders;
 }
 
-export async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategy, allNftItemsHolders: Set<string>): Promise<string> {
+export async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategyType, allNftItemsHolders: Set<string>): Promise<string> {
 
-  if (strategy == VotingPowerStrategy.TonBalance) {
+  if (strategy == VotingPowerStrategyType.TonBalance) {
     return (
       await clientV4.getAccountLite(
         proposalMetadata.mcSnapshotBlock,
@@ -205,11 +213,13 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
     ).account.balance.coins;
   }
 
-  else if (strategy == VotingPowerStrategy.JettonBalance) {
+  else if (strategy == VotingPowerStrategyType.JettonBalance) {
+
+    const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.JettonBalance, 'jetton-address');
 
     try {
 
-      let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(proposalMetadata.jetton!), 'get_wallet_address', addressStringToTupleItem(voter));
+      let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(jettonAddress!), 'get_wallet_address', addressStringToTupleItem(voter));
       
       if (res.result[0].type != 'slice') {
           return '0';
@@ -232,7 +242,7 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
 
   }
 
-  else if (strategy == VotingPowerStrategy.NftCcollection) {
+  else if (strategy == VotingPowerStrategyType.NftCcollection) {
     
     if (allNftItemsHolders.has(voter)) {
       return toNano('1').toString();
@@ -250,7 +260,7 @@ export async function getVotingPower(
   proposalMetadata: ProposalMetadata,
   transactions: Transaction[],
   votingPower: VotingPower = {},
-  strategy: VotingPowerStrategy =  VotingPowerStrategy.TonBalance,
+  strategy: VotingPowerStrategyType =  VotingPowerStrategyType.TonBalance,
   nftItemsHolders: Set<string> = new Set() 
 ): Promise<VotingPower> {
   let voters = Object.keys(getAllVotes(transactions, proposalMetadata));

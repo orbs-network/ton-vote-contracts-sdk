@@ -128,11 +128,9 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: s
                         proposalEndTime: BigInt(proposalMetadata.proposalEndTime),
                         proposalSnapshotTime: BigInt(proposalMetadata.proposalSnapshotTime),
                         votingSystem: JSON.stringify(proposalMetadata.votingSystem),
-                        votingPowerStrategy: BigInt(proposalMetadata.votingPowerStrategy),
+                        votingPowerStrategies: JSON.stringify(proposalMetadata.votingPowerStrategies),
                         title: proposalMetadata.title,
-                        description: proposalMetadata.description,
-                        jetton: Address.parse(proposalMetadata.jetton || ZERO_ADDR),
-                        nft: Address.parse(proposalMetadata.nft || ZERO_ADDR)
+                        description: proposalMetadata.description
                     }
                 })).endCell(),
                 code: code,
