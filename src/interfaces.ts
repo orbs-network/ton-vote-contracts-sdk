@@ -43,13 +43,12 @@ export enum VotingPowerStrategyType {
 
 /*
 examples: 
-{name: 'blacklist', list: true, value: 'EQBeHRBlsDK-2ZGlmRb7D_WwOY0gObuXrkRb-RC_TWI2Awll, EQBXOjSadD0rTzWTESeHroy33SlcbqBkYSCmA02dEgMIcv0G'}
-{name: 'jetton-address', list: false, value: 'EQBeHRBlsDK-2ZGlmRb7D_WwOY0gObuXrkRb-RC_TWI2Awll'}
+{name: 'blacklist', value: 'EQBeHRBlsDK-2ZGlmRb7D_WwOY0gObuXrkRb-RC_TWI2Awll, EQBXOjSadD0rTzWTESeHroy33SlcbqBkYSCmA02dEgMIcv0G'}
+{name: 'jetton-address', value: 'EQBeHRBlsDK-2ZGlmRb7D_WwOY0gObuXrkRb-RC_TWI2Awll'}
 */
 export interface VotingPowerStrategyArg {
     name: string, 
-    list: boolean, // could be a list, list should be seperated with commas
-    value: string // value of the args
+    value: string
 }
 
 export interface VotingPowerStrategy {
@@ -68,13 +67,13 @@ ton-balance:
 jetton: 
 {
     type: VotingPowerStrategyType.JettonBalance,
-    arguments: [{name: 'jetton-address', list: false, value: 'EQBXOjSadD0rTzWTESeHroy33SlcbqBkYSCmA02dEgMIcv0G'}]
+    arguments: [{name: 'jetton-address', value: 'EQBXOjSadD0rTzWTESeHroy33SlcbqBkYSCmA02dEgMIcv0G'}]
 }
 
 nft: 
 {
     type: VotingPowerStrategyType.NftCcollection,
-    arguments: [{name: 'nft-address', list: false, value: 'EQBXOjSadD0rTzWTESeHroy33SlcbqBkYSCmA02dEgMIcv0G'}]
+    arguments: [{name: 'nft-address', value: 'EQBXOjSadD0rTzWTESeHroy33SlcbqBkYSCmA02dEgMIcv0G'}]
 }
 
 */
