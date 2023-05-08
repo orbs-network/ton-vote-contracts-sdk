@@ -94,7 +94,9 @@ export const useGetSender = () => {
 ## newMetdata
 The dao metadata is stored in a seperate contract which should facilitates future changes and upgrades of the metadata. 
 Before creating a new dao, metadata contract should be deployed to the chain. 
-This function receives `Sender`, `TonClient`, `MetadataArgs` and returns a Promise with the metadta address as a string on success or boolean on failure. 
+This function receives `Sender`, `TonClient`, `MetadataArgs` which includes some metadata about the dao such as logo title and social networks of the dao. 
+
+The function returns a Promise with the metadata address as a string on success, or boolean on failure.
 
 ## newDao
 This function is used to create a new DAO. Anyone can create a Dao, however, to prevent DDoS attacks on the system, there is a small fee associated with creating a new DAO.
