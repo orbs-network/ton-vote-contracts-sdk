@@ -13,7 +13,7 @@ export async function getRegistry(client : TonClient): Promise<string> {
     return registryContract.address.toString();
 }
 
-export async function getDaos(client : TonClient, nextId: null | number = null, batchSize=10, order: 'desc' | 'asc' ='desc'): Promise<{endDaoId: number, daoAddresses: string[]}> {  
+export async function getDaos(client : TonClient, nextId: null | number = null, batchSize=100, order: 'desc' | 'asc' ='asc'): Promise<{endDaoId: number, daoAddresses: string[]}> {  
 
     if (order == 'desc') return getDaosDesc(client, nextId, batchSize);
     return getDaosAsc(client, nextId, batchSize);
@@ -116,13 +116,13 @@ export async function getDaoIndex(client : TonClient, daoAddr: string): Promise<
     return id;
 }
 
-export async function getDaoProposals(client : TonClient, daoAddr: string, nextId: number | null = null, batchSize=10, order: 'desc' | 'asc' = 'desc'): Promise<{endProposalId: number, proposalAddresses: string[] | undefined}> {
+export async function getDaoProposals(client : TonClient, daoAddr: string, nextId: number | null = null, batchSize=100, order: 'desc' | 'asc' = 'asc'): Promise<{endProposalId: number, proposalAddresses: string[] | undefined}> {
     
     if (order == 'desc') return getDaoProposalsDesc(client, daoAddr, nextId, batchSize);
     return getDaoProposalsAsc(client, daoAddr, nextId, batchSize);
 }
 
-async function getDaoProposalsDesc(client : TonClient, daoAddr: string, startId: number | null = null, batchSize=10): Promise<{endProposalId: number, proposalAddresses: string[] | undefined}> {
+async function getDaoProposalsDesc(client : TonClient, daoAddr: string, startId: number | null = null, batchSize=100): Promise<{endProposalId: number, proposalAddresses: string[] | undefined}> {
     let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
     let proposalDeployer = client.open(await ProposalDeployer.fromInit(daoContract.address));
 
@@ -159,7 +159,7 @@ async function getDaoProposalsDesc(client : TonClient, daoAddr: string, startId:
     return {endProposalId: endProposalId-1, proposalAddresses};
 }
 
-async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: number | null = null, batchSize=10): Promise<{endProposalId: number, proposalAddresses: string[] | undefined}> {
+async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: number | null = null, batchSize=100): Promise<{endProposalId: number, proposalAddresses: string[] | undefined}> {
     let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
     let proposalDeployer = client.open(await ProposalDeployer.fromInit(daoContract.address));
 
