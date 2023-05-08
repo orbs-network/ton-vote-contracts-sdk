@@ -126,7 +126,7 @@ This function allows a voter to cast their vote on a proposal by sending a messa
 The function returns a boolean indicating whether the transaction was successful or not.
 
 # Contribution Guidelines
-We appreciate your help in improving the TON.Vote platform. If you've encountered a bug or have an idea for a new feature, please open a new issue or pull request on our [GitHub repository](https://github.com/orbs-network/ton-vote-contracts-sdk).
+We appreciate your help in improving the TON.Vote platform. If you've encountered a bug or have an idea for a new feature, please open a new issue or pull request on our [GitHub repository](https://github.com/orbs-network/ton-vote-contracts-sdk/issues).
 
 When opening an issue, please provide as much detail as possible about the bug or feature request, including steps to reproduce the issue and any relevant logs or screenshots.
 
