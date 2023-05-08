@@ -5,24 +5,24 @@ import { Metadata } from '../contracts/output/ton-vote_Metadata';
 import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
 import { TonClient, TonClient4, Address } from "ton";
-import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType } from "./interfaces";
+import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType, ReleaseMode } from "./interfaces";
 
 
-export async function getRegistry(client : TonClient): Promise<string> {  
-    let registryContract = client.open(await Registry.fromInit());
+export async function getRegistry(client : TonClient, releaseMode: ReleaseMode): Promise<string> {  
+    let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
     return registryContract.address.toString();
 }
 
-export async function getDaos(client : TonClient, nextId: null | number = null, batchSize=100, order: 'desc' | 'asc' ='asc'): Promise<{endDaoId: number, daoAddresses: string[]}> {  
+export async function getDaos(client : TonClient, releaseMode: ReleaseMode, nextId: null | number = null, batchSize=100, order: 'desc' | 'asc' ='asc'): Promise<{endDaoId: number, daoAddresses: string[]}> {  
 
-    if (order == 'desc') return getDaosDesc(client, nextId, batchSize);
-    return getDaosAsc(client, nextId, batchSize);
+    if (order == 'desc') return getDaosDesc(client, releaseMode, nextId, batchSize);
+    return getDaosAsc(client, releaseMode, nextId, batchSize);
 }
 
 // TODO: FIXME
-async function getDaosDesc(client : TonClient, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
+async function getDaosDesc(client : TonClient, releaseMode: ReleaseMode, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
 
-  let registryContract = client.open(await Registry.fromInit());
+  let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
   let daoAddresses: string[] = [];
 
   if (startId == null) {
@@ -45,9 +45,9 @@ async function getDaosDesc(client : TonClient, startId: null | number = null, ba
   return {endDaoId: endDaoId-1, daoAddresses};
 }
 
-async function getDaosAsc(client : TonClient, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
+async function getDaosAsc(client : TonClient, releaseMode: ReleaseMode, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
 
-    let registryContract = client.open(await Registry.fromInit());
+    let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
     let daoAddresses: string[] = [];
   
     if (startId == null) {
@@ -272,7 +272,7 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     // const mcSnapshotBlock = await getBlockFromTime(client4, proposalSnapshotTime);
 
     const id = Number(await proposal.getId());
-    const owner = (await proposal.getOwner()).toString();
+    const parent = (await proposal.getParent()).toString();
     const proposalStartTime = Number(await proposal.getProposalStartTime());
     const proposalEndTime = Number(await proposal.getProposalEndTime());
     const proposalSnapshotTime = Number(await proposal.getProposalSnapshotTime());
@@ -283,7 +283,7 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     const title = await proposal.getTitle();
     const description = await proposal.getDescription();    
 
-    return {id, owner, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, 
+    return {id, parent, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, 
         votingSystem, votingPowerStrategies, title, description};
 }
 

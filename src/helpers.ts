@@ -1,5 +1,6 @@
 import {
   Address,
+  Builder,
   Cell,
   OpenedContract
 } from "ton";
@@ -168,3 +169,11 @@ export function intToTupleItem(value: number): TupleItem[] {
 export function cellToAddress(cell :Cell): Address {
   return cell.beginParse().loadAddress();
 }  
+
+export function storeComment(msg: string) {
+  return (builder: Builder) => {
+      let b_0 = builder;
+      b_0.storeUint(0, 32);
+      b_0.storeStringTail(msg);
+  };
+}

@@ -1,5 +1,10 @@
 import { Transaction } from "ton";
 
+export enum ReleaseMode {
+    PRODUCTION = 0,
+    DEVELOPMENT = 1
+}
+
 export interface TxData {
     allTxns: Transaction [], 
     maxLt: undefined | string
@@ -81,7 +86,7 @@ nft:
 export interface ProposalMetadata {
 
     id: number;
-    owner: string;
+    parent: string;
     mcSnapshotBlock: number;
     proposalStartTime: number;
     proposalEndTime: number;

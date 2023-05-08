@@ -1,15 +1,16 @@
-import { waitForConditionChange, waitForContractToBeDeployed, getSeqno } from "./helpers";
+import { waitForConditionChange, waitForContractToBeDeployed, getSeqno, storeComment } from "./helpers";
 import { Registry } from '../contracts/output/ton-vote_Registry'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
 import { ProposalDeployer, storeCreateProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
-import { TonClient } from "ton";
+import { SendMode, TonClient } from "ton";
 import { Address, Sender, toNano, beginCell, Cell } from "ton-core";
-import { MetadataArgs, ProposalMetadata } from "./interfaces";
+import { MetadataArgs, ProposalMetadata, ReleaseMode } from "./interfaces";
 
 
-const DAO_DEPLOY_VALUE = "0.25"; // TODO: fixme change to 1 ton 
+const REGISTRY_DEPLOY_VALUE = "0.25";
+const DAO_DEPLOY_VALUE = "0.25"; 
 const PROPOSAL_DEPLOY_VALUE = "0.25";
 const SET_OWNER_DEPLOY_VALUE = "0.25";
 const SET_PROPOSAL_OWNER_DEPLOY_VALUE = "0.25";
@@ -17,14 +18,44 @@ const SET_PROPOSAL_OWNER_DEPLOY_VALUE = "0.25";
 const ZERO_ADDR = 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c';
 
 
-export async function newDao(sender: Sender, client : TonClient, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
+export async function newRegistry(sender: Sender, client : TonClient, releaseMode: ReleaseMode, admin: string): Promise<boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
         return false;
     };
     
-    let registryContract = client.open(await Registry.fromInit());
+    let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
+
+    await registryContract.send(sender, { value: toNano(REGISTRY_DEPLOY_VALUE) }, 
+    { 
+        $$type: 'Deploy', 
+        queryId: 0n
+    });
+    
+    if (!await waitForContractToBeDeployed(client, registryContract.address)) {
+        console.error('failed to deploy registry contract');
+        return false;        
+    }
+
+    await registryContract.send(sender, { value: toNano(REGISTRY_DEPLOY_VALUE) }, 
+    { 
+        $$type: 'SetRegistryAdmin', 
+        newAdmin: Address.parse(admin)
+    });
+
+    return await waitForConditionChange(registryContract.getAdmin, [], ZERO_ADDR);    
+
+}
+
+export async function newDao(sender: Sender, client : TonClient, releaseMode: ReleaseMode, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
+
+    if (!sender.address) {
+        console.log(`sender address is not defined`);        
+        return false;
+    };
+    
+    let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
     const nextDaoId = await registryContract.getNextDaoId();
 
     let daoContract = client.open(await Dao.fromInit(registryContract.address, nextDaoId));
@@ -218,6 +249,14 @@ export async function proposalSendMessage(sender: Sender, client: TonClient, pro
     }
     
     const seqno = await getSeqno(client, sender.address.toString());
-    await proposalContract.send(sender, { value: toNano(msgValue), bounce: true }, { $$type: 'Comment', body: msgBody });
+
+    await sender.send(
+        {
+            value: toNano(msgValue), to: Address.parse(proposalAddr), 
+            body: beginCell().store(storeComment(msgBody)).endCell(),
+            sendMode: SendMode.CARRY_ALL_REMAINING_INCOMING_VALUE, 
+        }
+    );
+
     await waitForConditionChange(getSeqno, [client, sender.address.toString()], seqno);
 }
