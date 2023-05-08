@@ -131,7 +131,7 @@ We appreciate your help in improving the TON.Vote platform. If you've encountere
 When opening an issue, please provide as much detail as possible about the bug or feature request, including steps to reproduce the issue and any relevant logs or screenshots.
 
 # Related Repositories
-- UI: https://github.com/[your-username]/ton-vote-ui
+- UI: https://github.com/orbs-network/ton-vote
 - Contracts: https://github.com/[your-username]/ton-vote-contracts
 - Contract SDK: https://github.com/[your-username]/ton-vote-contracts-sdk
 
