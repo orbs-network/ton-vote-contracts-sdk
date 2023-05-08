@@ -124,3 +124,14 @@ The function returns a Promise with the new proposal owner address as a string o
 This function allows a voter to cast their vote on a proposal by sending a message to the proposal contract. The function requires several parameters, including `Sender`, which represents the voter's wallet address, `TonClient`, `proposalAddr`, which is the address of the proposal to be voted on, `msgValue`, which is the value to be sent with the message and will be deducted from the voter's wallet (this serves as the vote fee as all votes are currently on-chain), and `msgBody`, which represents the comment or vote to be sent to the contract. For example, a `msgBody` of "yes" would represent a "yes" vote on the proposal.
 
 The function returns a boolean indicating whether the transaction was successful or not.
+
+# Contribution Guidelines
+We appreciate your help in improving the TON.Vote platform. If you've encountered a bug or have an idea for a new feature, please open a new issue or pull request on our [GitHub repository](https://github.com/orbs-network/ton-vote-contracts-sdk).
+
+When opening an issue, please provide as much detail as possible about the bug or feature request, including steps to reproduce the issue and any relevant logs or screenshots.
+
+# Related Repositories
+- UI: https://github.com/[your-username]/ton-vote-ui
+- Contracts: https://github.com/[your-username]/ton-vote-contracts
+- Contract SDK: https://github.com/[your-username]/ton-vote-contracts-sdk
+
