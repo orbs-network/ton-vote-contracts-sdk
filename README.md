@@ -96,31 +96,31 @@ The dao metadata is stored in a seperate contract which should facilitates futur
 Before creating a new dao, metadata contract should be deployed to the chain. 
 This function receives `Sender`, `TonClient`, `MetadataArgs` which includes some metadata about the dao such as logo title and social networks of the dao. 
 
-The function returns a Promise with the metadata address as a string on success, or boolean on failure.
+The function returns a Promise with the metadata address as a string on success, or a boolean on failure.
 
 ## newDao
 This function is used to create a new DAO. Anyone can create a Dao, however, to prevent DDoS attacks on the system, there is a small fee associated with creating a new DAO.
 
 To create a new Dao, you need to provide several parameters: `Sender`, which represents the account sending the transaction.`TonClient`, which provides access to the TON network. `metadataAddr` which is the address of the metadata contract create by `newMetadata`, `ownerAddr` which is the address of the DAO space owner with full permissions to manage the DAO, and `proposalOwner`which is the address of the proposal publisher who can create new proposals without affecting the DAO metadata or roles.
 
-The function returns a Promise with the dao address as a string on success or boolean on failure. 
+The function returns a Promise with the dao address as a string on success or a boolean on failure. 
 
 ## newProposal
-Create a new proposal for a specific dao with a given `ProposalMetadata`. The propsoal contract stores all the propsal metadata. In case of major changes to the metadata, the proposal contract will be upgraded and the client should reflect these changes but it will not effect the dao contract. Ton.vote [contracts](https://github.com/orbs-network/ton-vote-contracts) describes the contracts architecture.
+Creates a new proposal for a specific dao with a given `ProposalMetadata`. The propsoal contract stores all the propsal metadata. In case of major changes to the metadata, the proposal contract will be upgraded and the client should reflect these changes but it will not effect the dao contract. Ton.vote [contracts](https://github.com/orbs-network/ton-vote-contracts) describes the contracts architecture.
 
-The function returns a Promise with the proposal address as a string on success or boolean on failure. 
+The function returns a Promise with the proposal address as a string on success or a boolean on failure. 
 
 ## daoSetOwner
 Used to update the dao owner. Only the daoOwner can use this method.
 The function receive `Sender` which should be the daoOwner, `TonClient`, `daoAddr` which is the address of the dao to be updated and a string `newOwner` which is the new owner of the dao.
 
-The function returns a Promise with the new owner address as a string on success or boolean on failure. 
+The function returns a Promise with the new owner address as a string on success or a boolean on failure. 
 
 ## daoSetProposalOwner
 Used to update the dao proposal owner which is used to create new proposals. Only the daoOwner can call this method.
 The function receive `Sender` which should be the daoOwner, `TonClient`, `daoAddr` which is the address of the dao to be updated and a string `newProposalOwner` which is the new proposal owner.
 
-The function returns a Promise with the new proposal owner address as a string on success or boolean on failure. 
+The function returns a Promise with the new proposal owner address as a string on success or a boolean on failure. 
 
 ## proposalSendMessage
 This function allows a voter to cast their vote on a proposal by sending a message to the proposal contract. The function requires several parameters, including `Sender`, which represents the voter's wallet address, `TonClient`, `proposalAddr`, which is the address of the proposal to be voted on, `msgValue`, which is the value to be sent with the message and will be deducted from the voter's wallet (this serves as the vote fee as all votes are currently on-chain), and `msgBody`, which represents the comment or vote to be sent to the contract. For example, a `msgBody` of "yes" would represent a "yes" vote on the proposal.
