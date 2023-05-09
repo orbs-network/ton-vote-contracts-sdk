@@ -268,7 +268,7 @@ export async function daoSetProposalOwner(sender: Sender, client : TonClient, da
     return await waitForConditionChange(daoContract.getProposalOwner, [], proposalOwner) && newProposalOwner;
 }
 
-export async function daoSetMetadata(sender: Sender, client : TonClient, daoAddr: string, newMetadataAddr: string): Promise<string | boolean> {  
+export async function setMetadata(sender: Sender, client : TonClient, daoAddr: string, newMetadataAddr: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
