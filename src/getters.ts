@@ -272,7 +272,7 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     // const mcSnapshotBlock = await getBlockFromTime(client4, proposalSnapshotTime);
 
     const id = Number(await proposal.getId());
-    const parent = (await proposal.getParent()).toString();
+    const proposalDeployer = (await proposal.getProposalDeployer()).toString();
     const proposalStartTime = Number(await proposal.getProposalStartTime());
     const proposalEndTime = Number(await proposal.getProposalEndTime());
     const proposalSnapshotTime = Number(await proposal.getProposalSnapshotTime());
@@ -283,7 +283,7 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     const title = await proposal.getTitle();
     const description = await proposal.getDescription();    
 
-    return {id, parent, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, 
+    return {id, proposalDeployer, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, 
         votingSystem, votingPowerStrategies, title, description};
 }
 

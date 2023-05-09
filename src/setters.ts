@@ -80,6 +80,38 @@ export async function newDao(sender: Sender, client : TonClient, releaseMode: Re
     
 }
 
+export async function setDeployDaoCost(sender: Sender, client : TonClient, releaseMode: ReleaseMode, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
+
+    if (!sender.address) {
+        console.log(`sender address is not defined`);        
+        return false;
+    };
+    
+    let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
+    const nextDaoId = await registryContract.getNextDaoId();
+
+    let daoContract = client.open(await Dao.fromInit(registryContract.address, nextDaoId));
+    
+    if (await client.isContractDeployed(daoContract.address)) {
+        
+        console.log("Contract already deployed");
+        return daoContract.address.toString();
+    
+    } else {
+                
+        await registryContract.send(sender, { value: toNano(DAO_DEPLOY_VALUE) }, 
+        { 
+            $$type: 'CreateDao', 
+            owner: Address.parse(ownerAddr), 
+            proposalOwner: Address.parse(proposalOwner), 
+            metadata: Address.parse(metadataAddr)
+        });
+
+        return await waitForConditionChange(registryContract.getNextDaoId, [], nextDaoId) && daoContract.address.toString();
+    }
+    
+}
+
 export async function newMetdata(sender: Sender, client : TonClient, metadataArgs: MetadataArgs): Promise<string | boolean> {  
 
     if (!sender.address) {

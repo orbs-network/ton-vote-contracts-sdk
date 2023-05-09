@@ -86,7 +86,7 @@ nft:
 export interface ProposalMetadata {
 
     id: number;
-    parent: string;
+    proposalDeployer: string;
     mcSnapshotBlock: number;
     proposalStartTime: number;
     proposalEndTime: number;
