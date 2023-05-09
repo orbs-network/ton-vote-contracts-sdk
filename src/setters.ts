@@ -128,11 +128,11 @@ export async function setRegistryAdmin(sender: Sender, client : TonClient, relea
     return await waitForConditionChange(registryContract.getAdmin, [], registryAdmin);
 }
 
-export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, daoIds: string[], newFwdMsgFee: string): Promise<string | boolean> {  
+export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, daoIds: string[], newFwdMsgFee: string): Promise<boolean[]> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
-        return false;
+        return [false];
     };
     
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
@@ -154,7 +154,7 @@ export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMo
         return waitForConditionChange(daoContract.getFwdMsgFee, [], fwdMsgFee);
       });
       
-      const result = await Promise.all(promises);      
+      return await Promise.all(promises);  
 }
 
 export async function newMetdata(sender: Sender, client : TonClient, metadataArgs: MetadataArgs): Promise<string | boolean> {  
