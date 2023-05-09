@@ -269,7 +269,7 @@ export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: s
     }
 
     let owner = await daoContract.getOwner();
-    if (( owner != sender.address)) {        
+    if (owner.toString() != sender.address.toString()) {        
         console.log("Only owner is allowed to set new owner");
         return false;
     }
@@ -299,8 +299,8 @@ export async function daoSetProposalOwner(sender: Sender, client : TonClient, da
 
     let proposalOwner = await daoContract.getProposalOwner();
     let owner = await daoContract.getOwner();
-    if ((proposalOwner != sender.address) && (owner != sender.address)) {        
-        console.log("Only proposalOwner or owner are allowed to create proposal");
+    if (owner.toString() != sender.address.toString()) {        
+        console.log("Only owner is allowed to create proposal");
         return false;
     }
 
