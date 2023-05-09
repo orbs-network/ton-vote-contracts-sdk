@@ -13,6 +13,7 @@ const REGISTRY_DEPLOY_VALUE = "0.25";
 const DAO_DEPLOY_VALUE = "0.25"; 
 const PROPOSAL_DEPLOY_VALUE = "0.25";
 const SET_OWNER_DEPLOY_VALUE = "0.25";
+const SET_METADATA_DEPLOY_VALUE = "0.25";
 const SET_PROPOSAL_OWNER_DEPLOY_VALUE = "0.25";
 
 const ZERO_ADDR = 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c';
@@ -45,7 +46,6 @@ export async function newRegistry(sender: Sender, client : TonClient, releaseMod
     });
 
     return await waitForConditionChange(registryContract.getAdmin, [], ZERO_ADDR);    
-
 }
 
 export async function newDao(sender: Sender, client : TonClient, releaseMode: ReleaseMode, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
@@ -266,6 +266,37 @@ export async function daoSetProposalOwner(sender: Sender, client : TonClient, da
     );      
     
     return await waitForConditionChange(daoContract.getProposalOwner, [], proposalOwner) && newProposalOwner;
+}
+
+export async function daoSetMetadata(sender: Sender, client : TonClient, daoAddr: string, newMetadataAddr: string): Promise<string | boolean> {  
+
+    if (!sender.address) {
+        console.log(`sender address is not defined`);        
+        return false;
+    };
+    
+    let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
+
+    if (!(await client.isContractDeployed(daoContract.address))) {        
+        console.log("Dao contract is not deployed");
+        return false;
+    }
+
+    let owner = await daoContract.getOwner();
+    if (( owner != sender.address)) {        
+        console.log("Only owner is allowed to set new new metadata");
+        return false;
+    }
+
+    let metadtaAddr = await daoContract.getMetadata();
+
+    await daoContract.send(sender, { value: toNano(SET_METADATA_DEPLOY_VALUE) }, 
+        { 
+            $$type: 'SetMetadata', newMetadata: Address.parse(newMetadataAddr)
+        }
+    );      
+    
+    return await waitForConditionChange(daoContract.getMetadata, [], metadtaAddr) && owner.toString();
 }
 
 export async function proposalSendMessage(sender: Sender, client: TonClient, proposalAddr: string, msgValue: string, msgBody: string) {
