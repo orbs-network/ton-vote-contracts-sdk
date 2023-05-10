@@ -328,7 +328,7 @@ export async function setMetadata(sender: Sender, client : TonClient, daoAddr: s
     }
 
     let owner = await daoContract.getOwner();
-    if (( owner != sender.address)) {        
+    if (owner.toString() != sender.address.toString()) {        
         console.log("Only owner is allowed to set new new metadata");
         return false;
     }
