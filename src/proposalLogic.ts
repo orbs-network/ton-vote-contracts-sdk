@@ -250,7 +250,7 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
 
   else if (strategy == VotingPowerStrategyType.NftCcollection) {
     
-    return (allNftItemsHolders[voter] || 0).toString()
+    return (toNano(allNftItemsHolders[voter] || 0)).toString()
   }
 
   return '0';
