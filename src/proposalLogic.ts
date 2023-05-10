@@ -147,9 +147,9 @@ function extractValueFromStrategy(votingPowerStrategies: VotingPowerStrategy[], 
   return nftArg ? nftArg.value : undefined;
 } 
 
-export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<Set<string>> {
+export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<{ [key: string]: number } > {
 
-  let allNftItemsHolders = new Set<string>();
+  let allNftItemsHolders: { [key: string]: number } = {};
   const nftAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.NftCcollection, 'nft-address');
   let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(nftAddress!), 'get_collection_data');
 
@@ -193,8 +193,14 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
           console.log(`unexpected result type from runMethod on get_nft_data on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
           return;
         }
-        
-        allNftItemsHolders.add(cellToAddress(res.result[3].cell).toString());
+
+        const address = cellToAddress(res.result[3].cell).toString();
+        if (allNftItemsHolders.hasOwnProperty(address)) {
+          allNftItemsHolders[address] += 1;
+        } else {
+          allNftItemsHolders[address] = 1;
+        }
+                        
       })();
     }));
   }
