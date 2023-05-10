@@ -200,7 +200,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
         } else {
           allNftItemsHolders[address] = 1;
         }
-                        
+
       })();
     }));
   }
@@ -208,7 +208,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
   return allNftItemsHolders;
 }
 
-export async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategyType, allNftItemsHolders: Set<string>): Promise<string> {
+export async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategyType, allNftItemsHolders: { [key: string]: number }): Promise<string> {
 
   if (strategy == VotingPowerStrategyType.TonBalance) {
     return (
@@ -250,7 +250,7 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
 
   else if (strategy == VotingPowerStrategyType.NftCcollection) {
     
-    if (allNftItemsHolders.has(voter)) {
+    if (allNftItemsHolders.hasOwnProperty(voter)) {
       return toNano('1').toString();
     }
 
@@ -267,7 +267,7 @@ export async function getVotingPower(
   transactions: Transaction[],
   votingPower: VotingPower = {},
   strategy: VotingPowerStrategyType =  VotingPowerStrategyType.TonBalance,
-  nftItemsHolders: Set<string> = new Set() 
+  nftItemsHolders: { [key: string]: number } = {}
 ): Promise<VotingPower> {
   let voters = Object.keys(getAllVotes(transactions, proposalMetadata));
 
