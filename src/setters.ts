@@ -9,18 +9,10 @@ import { Address, Sender, toNano, beginCell, Cell } from "ton-core";
 import { MetadataArgs, ProposalMetadata, ReleaseMode } from "./interfaces";
 
 
-const SET_CREATE_DAO_FEE_VALUE = "0.01";
-const REGISTRY_DEPLOY_VALUE = "0.25";
-const DAO_DEPLOY_VALUE = "0.25"; 
-const PROPOSAL_DEPLOY_VALUE = "0.25";
-const SET_OWNER_DEPLOY_VALUE = "0.25";
-const SET_METADATA_DEPLOY_VALUE = "0.25";
-const SET_PROPOSAL_OWNER_DEPLOY_VALUE = "0.25";
-
 const ZERO_ADDR = 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c';
 
 
-export async function newRegistry(sender: Sender, client : TonClient, releaseMode: ReleaseMode, admin: string): Promise<boolean> {  
+export async function newRegistry(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, admin: string): Promise<boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -29,7 +21,7 @@ export async function newRegistry(sender: Sender, client : TonClient, releaseMod
     
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
 
-    await registryContract.send(sender, { value: toNano(REGISTRY_DEPLOY_VALUE) }, 
+    await registryContract.send(sender, { value: toNano(fee) }, 
     { 
         $$type: 'Deploy', 
         queryId: 0n
@@ -40,7 +32,7 @@ export async function newRegistry(sender: Sender, client : TonClient, releaseMod
         return false;        
     }
 
-    await registryContract.send(sender, { value: toNano(REGISTRY_DEPLOY_VALUE) }, 
+    await registryContract.send(sender, { value: toNano(fee) }, 
     { 
         $$type: 'SetRegistryAdmin', 
         newAdmin: Address.parse(admin)
@@ -49,7 +41,7 @@ export async function newRegistry(sender: Sender, client : TonClient, releaseMod
     return await waitForConditionChange(registryContract.getAdmin, [], ZERO_ADDR);    
 }
 
-export async function newDao(sender: Sender, client : TonClient, releaseMode: ReleaseMode, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
+export async function newDao(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -68,7 +60,7 @@ export async function newDao(sender: Sender, client : TonClient, releaseMode: Re
     
     } else {
                 
-        await registryContract.send(sender, { value: toNano(DAO_DEPLOY_VALUE) }, 
+        await registryContract.send(sender, { value: toNano(fee) }, 
         { 
             $$type: 'CreateDao', 
             owner: Address.parse(ownerAddr), 
@@ -81,7 +73,7 @@ export async function newDao(sender: Sender, client : TonClient, releaseMode: Re
     
 }
 
-export async function setCreateDaoFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, newCreateDaoFee: string): Promise<string | boolean> {  
+export async function setCreateDaoFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, newCreateDaoFee: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -94,7 +86,7 @@ export async function setCreateDaoFee(sender: Sender, client : TonClient, releas
 
     if (createDaoFee == toNano(newCreateDaoFee)) return true;
 
-    await registryContract.send(sender, { value: toNano(SET_CREATE_DAO_FEE_VALUE) }, 
+    await registryContract.send(sender, { value: toNano(fee) }, 
     { 
         $$type: 'SetCreateDaoFee', 
         newCreateDaoFee: toNano(newCreateDaoFee)
@@ -103,7 +95,7 @@ export async function setCreateDaoFee(sender: Sender, client : TonClient, releas
     return await waitForConditionChange(registryContract.getCreateDaoFee, [], createDaoFee);
 }
 
-export async function setRegistryAdmin(sender: Sender, client : TonClient, releaseMode: ReleaseMode, newRegistryAdmin: string): Promise<string | boolean> {  
+export async function setRegistryAdmin(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, newRegistryAdmin: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -119,7 +111,7 @@ export async function setRegistryAdmin(sender: Sender, client : TonClient, relea
         return true;
     }
 
-    await registryContract.send(sender, { value: toNano(SET_CREATE_DAO_FEE_VALUE) }, 
+    await registryContract.send(sender, { value: toNano(fee) }, 
     { 
         $$type: 'SetRegistryAdmin', 
         newAdmin: Address.parse(newRegistryAdmin)
@@ -128,7 +120,7 @@ export async function setRegistryAdmin(sender: Sender, client : TonClient, relea
     return await waitForConditionChange(registryContract.getAdmin, [], registryAdmin);
 }
 
-export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, daoIds: string[], newFwdMsgFee: string): Promise<boolean[]> {  
+export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, daoIds: string[], newFwdMsgFee: string): Promise<boolean[]> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -144,7 +136,7 @@ export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMo
 
         if (fwdMsgFee == newFwdMsgFeeNano) return true;
 
-        await registryContract.send(sender, { value: toNano(SET_CREATE_DAO_FEE_VALUE) }, 
+        await registryContract.send(sender, { value: toNano(fee) }, 
         { 
             $$type: 'SendToDaoSetFwdMsgFee', 
             daoId: BigInt(daoId),
@@ -157,7 +149,7 @@ export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMo
       return await Promise.all(promises);  
 }
 
-export async function newMetdata(sender: Sender, client : TonClient, metadataArgs: MetadataArgs): Promise<string | boolean> {  
+export async function newMetdata(sender: Sender, client : TonClient, fee: string, metadataArgs: MetadataArgs): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);
@@ -176,13 +168,13 @@ export async function newMetdata(sender: Sender, client : TonClient, metadataArg
         return metadataContract.address.toString();
 
     } else {
-        await metadataContract.send(sender, { value: toNano('0.25') }, { $$type: 'Deploy' as const, queryId: BigInt(0) });
+        await metadataContract.send(sender, { value: toNano(fee) }, { $$type: 'Deploy' as const, queryId: BigInt(0) });
     }
 
     return await waitForContractToBeDeployed(client, metadataContract.address) && metadataContract.address.toString();
 }
 
-export async function newProposal(sender: Sender, client : TonClient, daoAddr: string, proposalMetadata: ProposalMetadata): Promise<string | boolean> {  
+export async function newProposal(sender: Sender, client : TonClient, fee: string, daoAddr: string, proposalMetadata: ProposalMetadata): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -220,7 +212,7 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: s
         nextProposalId = await proposalDeployerContract.getNextProposalId();
     }
 
-    await daoContract.send(sender, { value: toNano(PROPOSAL_DEPLOY_VALUE) }, 
+    await daoContract.send(sender, { value: toNano(fee) }, 
         { 
             $$type: 'FwdMsg', fwdMsg: {
                 $$type: 'SendParameters', 
@@ -254,7 +246,7 @@ export async function newProposal(sender: Sender, client : TonClient, daoAddr: s
     return await waitForConditionChange(proposalDeployerContract.getNextProposalId, [], nextProposalId) && proposalContract.address.toString();
 }
 
-export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: string, newOwner: string): Promise<string | boolean> {  
+export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: string, fee: string, newOwner: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -274,7 +266,7 @@ export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: s
         return false;
     }
 
-    await daoContract.send(sender, { value: toNano(SET_OWNER_DEPLOY_VALUE) }, 
+    await daoContract.send(sender, { value: toNano(fee) }, 
         { 
             $$type: 'SetOwner', newOwner: Address.parse(newOwner)
         }
@@ -283,7 +275,7 @@ export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: s
     return await waitForConditionChange(daoContract.getOwner, [], owner) && owner.toString();
 }
 
-export async function daoSetProposalOwner(sender: Sender, client : TonClient, daoAddr: string, newProposalOwner: string): Promise<string | boolean> {  
+export async function daoSetProposalOwner(sender: Sender, client : TonClient, fee: string, daoAddr: string, newProposalOwner: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -304,7 +296,7 @@ export async function daoSetProposalOwner(sender: Sender, client : TonClient, da
         return false;
     }
 
-    await daoContract.send(sender, { value: toNano(SET_PROPOSAL_OWNER_DEPLOY_VALUE) }, 
+    await daoContract.send(sender, { value: toNano(fee) }, 
         { 
             $$type: 'SetProposalOwner', newProposalOwner: Address.parse(newProposalOwner)
         }
@@ -313,7 +305,7 @@ export async function daoSetProposalOwner(sender: Sender, client : TonClient, da
     return await waitForConditionChange(daoContract.getProposalOwner, [], proposalOwner) && newProposalOwner;
 }
 
-export async function setMetadata(sender: Sender, client : TonClient, daoAddr: string, newMetadataAddr: string): Promise<string | boolean> {  
+export async function setMetadata(sender: Sender, client : TonClient, fee: string, daoAddr: string, newMetadataAddr: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -335,7 +327,7 @@ export async function setMetadata(sender: Sender, client : TonClient, daoAddr: s
 
     let metadtaAddr = await daoContract.getMetadata();
 
-    await daoContract.send(sender, { value: toNano(SET_METADATA_DEPLOY_VALUE) }, 
+    await daoContract.send(sender, { value: toNano(fee) }, 
         { 
             $$type: 'SetMetadata', newMetadata: Address.parse(newMetadataAddr)
         }
@@ -344,7 +336,7 @@ export async function setMetadata(sender: Sender, client : TonClient, daoAddr: s
     return await waitForConditionChange(daoContract.getMetadata, [], metadtaAddr) && owner.toString();
 }
 
-export async function proposalSendMessage(sender: Sender, client: TonClient, proposalAddr: string, msgValue: string, msgBody: string) {
+export async function proposalSendMessage(sender: Sender, client: TonClient, fee: string, proposalAddr: string, msgBody: string) {
     if (!sender.address) {
         console.log(`sender address is not defined`);
         return false;
@@ -360,7 +352,7 @@ export async function proposalSendMessage(sender: Sender, client: TonClient, pro
 
     await sender.send(
         {
-            value: toNano(msgValue), to: Address.parse(proposalAddr), 
+            value: toNano(fee), to: Address.parse(proposalAddr), 
             body: beginCell().store(storeComment(msgBody)).endCell(),
             sendMode: SendMode.CARRY_ALL_REMAINING_INCOMING_VALUE, 
         }
