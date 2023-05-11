@@ -352,9 +352,9 @@ export async function proposalSendMessage(sender: Sender, client: TonClient, fee
 
     await sender.send(
         {
-            value: toNano(fee), to: Address.parse(proposalAddr), 
+            value: 0n, to: Address.parse(proposalAddr), 
             body: beginCell().store(storeComment(msgBody)).endCell(),
-            sendMode: SendMode.CARRY_ALL_REMAINING_INCOMING_VALUE, 
+            sendMode: SendMode.PAY_GAS_SEPARATELY, 
         }
     );
 
