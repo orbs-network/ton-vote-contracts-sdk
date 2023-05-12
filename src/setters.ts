@@ -1,5 +1,5 @@
 import { waitForConditionChange, waitForContractToBeDeployed, getSeqno, storeComment } from "./helpers";
-import { Registry } from '../contracts/output/ton-vote_Registry'; 
+import { Registry, storeProposalInit } from '../contracts/output/ton-vote_Registry'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
 import { ProposalDeployer, storeCreateProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
@@ -53,23 +53,23 @@ export async function newDao(sender: Sender, client : TonClient, releaseMode: Re
 
     let daoContract = client.open(await Dao.fromInit(registryContract.address, nextDaoId));
     
+    let daoAlreadyDeployed = false;
+
     if (await client.isContractDeployed(daoContract.address)) {
         
-        console.log("Contract already deployed");
-        return daoContract.address.toString();
-    
-    } else {
+        console.log("Contract already deployed, will only send init message");
+        daoAlreadyDeployed = true;
+    } 
                 
-        await registryContract.send(sender, { value: toNano(fee) }, 
-        { 
-            $$type: 'CreateDao', 
-            owner: Address.parse(ownerAddr), 
-            proposalOwner: Address.parse(proposalOwner), 
-            metadata: Address.parse(metadataAddr)
-        });
+    await registryContract.send(sender, { value: toNano(fee) }, 
+    { 
+        $$type: daoAlreadyDeployed ? 'SendDaoInit' : 'CreateDao', 
+        owner: Address.parse(ownerAddr), 
+        proposalOwner: Address.parse(proposalOwner), 
+        metadata: Address.parse(metadataAddr)
+    });
 
-        return await waitForConditionChange(registryContract.getNextDaoId, [], nextDaoId) && daoContract.address.toString();
-    }
+    return await waitForConditionChange(registryContract.getNextDaoId, [], nextDaoId) && daoContract.address.toString();
     
 }
 
@@ -212,6 +212,42 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
         nextProposalId = await proposalDeployerContract.getNextProposalId();
     }
 
+    let proposalContractDeployed = false;
+    let proposalContract = await Proposal.fromInit(proposalDeployerContract.address, nextProposalId);
+
+    let proposalBody;
+    if (!(await client.isContractDeployed(proposalContract.address))) {
+        proposalBody = beginCell().store(storeCreateProposal({
+            $$type: 'CreateProposal',
+            body: {
+                $$type: 'Params',
+                proposalStartTime: BigInt(proposalMetadata.proposalStartTime),
+                proposalEndTime: BigInt(proposalMetadata.proposalEndTime),
+                proposalSnapshotTime: BigInt(proposalMetadata.proposalSnapshotTime),
+                votingSystem: JSON.stringify(proposalMetadata.votingSystem),
+                votingPowerStrategies: JSON.stringify(proposalMetadata.votingPowerStrategies),
+                title: proposalMetadata.title,
+                description: proposalMetadata.description
+            }
+        })).endCell()
+
+    } else {
+        proposalBody = beginCell().store(storeProposalInit({
+            $$type: 'ProposalInit',
+            body: {
+                $$type: 'Params',
+                proposalStartTime: BigInt(proposalMetadata.proposalStartTime),
+                proposalEndTime: BigInt(proposalMetadata.proposalEndTime),
+                proposalSnapshotTime: BigInt(proposalMetadata.proposalSnapshotTime),
+                votingSystem: JSON.stringify(proposalMetadata.votingSystem),
+                votingPowerStrategies: JSON.stringify(proposalMetadata.votingPowerStrategies),
+                title: proposalMetadata.title,
+                description: proposalMetadata.description
+            }
+        })).endCell()
+
+    }
+
     await daoContract.send(sender, { value: toNano(fee) }, 
         { 
             $$type: 'FwdMsg', fwdMsg: {
@@ -220,26 +256,12 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
                 to: proposalDeployerContract.address,
                 value: toNano(0),
                 mode: BigInt(64),
-                body: beginCell().store(storeCreateProposal({
-                    $$type: 'CreateProposal',
-                    body: {
-                        $$type: 'Params',
-                        proposalStartTime: BigInt(proposalMetadata.proposalStartTime),
-                        proposalEndTime: BigInt(proposalMetadata.proposalEndTime),
-                        proposalSnapshotTime: BigInt(proposalMetadata.proposalSnapshotTime),
-                        votingSystem: JSON.stringify(proposalMetadata.votingSystem),
-                        votingPowerStrategies: JSON.stringify(proposalMetadata.votingPowerStrategies),
-                        title: proposalMetadata.title,
-                        description: proposalMetadata.description
-                    }
-                })).endCell(),
+                body: proposalBody,
                 code: code,
                 data: data
             }
         }
     );      
-
-    let proposalContract = await Proposal.fromInit(proposalDeployerContract.address, nextProposalId);
 
     await waitForContractToBeDeployed(client, proposalContract.address);
     
