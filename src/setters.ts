@@ -52,18 +52,10 @@ export async function newDao(sender: Sender, client : TonClient, releaseMode: Re
     const nextDaoId = await registryContract.getNextDaoId();
 
     let daoContract = client.open(await Dao.fromInit(registryContract.address, nextDaoId));
-    
-    let daoAlreadyDeployed = false;
-
-    if (await client.isContractDeployed(daoContract.address)) {
-        
-        console.log("Contract already deployed, will only send init message");
-        daoAlreadyDeployed = true;
-    } 
-                
+                    
     await registryContract.send(sender, { value: toNano(fee) }, 
     { 
-        $$type: daoAlreadyDeployed ? 'SendDaoInit' : 'CreateDao', 
+        $$type: 'CreateDao', 
         owner: Address.parse(ownerAddr), 
         proposalOwner: Address.parse(proposalOwner), 
         metadata: Address.parse(metadataAddr)
