@@ -204,42 +204,6 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
         nextProposalId = await proposalDeployerContract.getNextProposalId();
     }
 
-    let proposalContractDeployed = false;
-    let proposalContract = await Proposal.fromInit(proposalDeployerContract.address, nextProposalId);
-
-    let proposalBody;
-    if (!(await client.isContractDeployed(proposalContract.address))) {
-        proposalBody = beginCell().store(storeCreateProposal({
-            $$type: 'CreateProposal',
-            body: {
-                $$type: 'Params',
-                proposalStartTime: BigInt(proposalMetadata.proposalStartTime),
-                proposalEndTime: BigInt(proposalMetadata.proposalEndTime),
-                proposalSnapshotTime: BigInt(proposalMetadata.proposalSnapshotTime),
-                votingSystem: JSON.stringify(proposalMetadata.votingSystem),
-                votingPowerStrategies: JSON.stringify(proposalMetadata.votingPowerStrategies),
-                title: proposalMetadata.title,
-                description: proposalMetadata.description
-            }
-        })).endCell()
-
-    } else {
-        proposalBody = beginCell().store(storeProposalInit({
-            $$type: 'ProposalInit',
-            body: {
-                $$type: 'Params',
-                proposalStartTime: BigInt(proposalMetadata.proposalStartTime),
-                proposalEndTime: BigInt(proposalMetadata.proposalEndTime),
-                proposalSnapshotTime: BigInt(proposalMetadata.proposalSnapshotTime),
-                votingSystem: JSON.stringify(proposalMetadata.votingSystem),
-                votingPowerStrategies: JSON.stringify(proposalMetadata.votingPowerStrategies),
-                title: proposalMetadata.title,
-                description: proposalMetadata.description
-            }
-        })).endCell()
-
-    }
-
     await daoContract.send(sender, { value: toNano(fee) }, 
         { 
             $$type: 'FwdMsg', fwdMsg: {
@@ -248,12 +212,26 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
                 to: proposalDeployerContract.address,
                 value: toNano(0),
                 mode: BigInt(64),
-                body: proposalBody,
+                body: beginCell().store(storeCreateProposal({
+                    $$type: 'CreateProposal',
+                    body: {
+                        $$type: 'Params',
+                        proposalStartTime: BigInt(proposalMetadata.proposalStartTime),
+                        proposalEndTime: BigInt(proposalMetadata.proposalEndTime),
+                        proposalSnapshotTime: BigInt(proposalMetadata.proposalSnapshotTime),
+                        votingSystem: JSON.stringify(proposalMetadata.votingSystem),
+                        votingPowerStrategies: JSON.stringify(proposalMetadata.votingPowerStrategies),
+                        title: proposalMetadata.title,
+                        description: proposalMetadata.description
+                    }
+                })).endCell(),
                 code: code,
                 data: data
             }
         }
     );      
+
+    let proposalContract = await Proposal.fromInit(proposalDeployerContract.address, nextProposalId);
 
     await waitForContractToBeDeployed(client, proposalContract.address);
     
