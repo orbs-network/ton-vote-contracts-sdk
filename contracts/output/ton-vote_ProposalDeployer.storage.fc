@@ -87,13 +87,13 @@ builder $Params$_store(builder build_0, (int, int, int, slice, slice, slice, sli
 }
 
 ;;
-;; Type: CreateProposal
-;; Header: 0x2ab84bd1
-;; TLB: create_proposal#2ab84bd1 body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string} = CreateProposal
+;; Type: DeployAndInitProposal
+;; Header: 0x4b931441
+;; TLB: deploy_and_init_proposal#4b931441 body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string} = DeployAndInitProposal
 ;;
 
-(slice, (((int, int, int, slice, slice, slice, slice)))) $CreateProposal$_load(slice sc_0) inline {
-    throw_unless(129, sc_0~load_uint(32) == 716721105);
+(slice, (((int, int, int, slice, slice, slice, slice)))) $DeployAndInitProposal$_load(slice sc_0) inline {
+    throw_unless(129, sc_0~load_uint(32) == 1267930177);
     var v'body = sc_0~$Params$_load();
     return (sc_0, (v'body));
 }

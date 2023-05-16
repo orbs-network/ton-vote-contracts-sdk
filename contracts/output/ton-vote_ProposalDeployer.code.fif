@@ -17,7 +17,7 @@ PROGRAM{
   DECLPROC $DeployOk$_store_cell
   DECLPROC $Params$_store
   DECLPROC $Params$_load
-  DECLPROC $CreateProposal$_load
+  DECLPROC $DeployAndInitProposal$_load
   DECLPROC $ProposalInit$_store
   DECLPROC $ProposalInit$_store_cell
   DECLPROC $ProposalDeployer$_store
@@ -41,7 +41,7 @@ PROGRAM{
   DECLPROC $SendParameters$_constructor_to_value_bounce_mode_body_code_data
   DECLPROC $ProposalInit$_constructor_body
   DECLPROC $DeployOk$_constructor_queryId
-  DECLPROC $ProposalDeployer$_internal_binary_CreateProposal
+  DECLPROC $ProposalDeployer$_internal_binary_DeployAndInitProposal
   DECLPROC $ProposalDeployer$_internal_binary_Deploy
   123641 DECLMETHOD %dao
   97465 DECLMETHOD %nextProposalId
@@ -233,10 +233,10 @@ PROGRAM{
     s1 s4 XCHG
     s3 s3 s0 XCHG3
   }>
-  $CreateProposal$_load PROCINLINE:<{
+  $DeployAndInitProposal$_load PROCINLINE:<{
     32 LDU
     SWAP
-    716721105 PUSHINT
+    1267930177 PUSHINT
     EQUAL
     129 THROWIFNOT
     $Params$_load INLINECALLDICT
@@ -507,7 +507,7 @@ PROGRAM{
   }>
   $DeployOk$_constructor_queryId PROCINLINE:<{
   }>
-  $ProposalDeployer$_internal_binary_CreateProposal PROCINLINE:<{
+  $ProposalDeployer$_internal_binary_DeployAndInitProposal PROCINLINE:<{
     13403 PUSHINT
     __tact_context_get_sender INLINECALLDICT
     s10 s(-1) PUXC
@@ -564,7 +564,7 @@ PROGRAM{
     209474421377847335869795010607481022628 PUSHINT
   }>
   get_abi_ipfs PROC:<{
-    x{697066733a2f2f516d4e715879376f3336313154424e50513631334e65563262674259575072784534464c7a5a536f335358653233} PUSHSLICE
+    x{697066733a2f2f516d556b585531623937345253716e79394e6632484a617642625248776a6958314176734d615677544b544a4733} PUSHSLICE
   }>
   lazy_deployment_completed PROC:<{
     c4 PUSH
@@ -588,13 +588,13 @@ PROGRAM{
       32 PLDU
     }>
     DUP
-    716721105 PUSHINT
+    1267930177 PUSHINT
     EQUAL
     IFJMP:<{
       DROP
-      $CreateProposal$_load INLINECALLDICT
+      $DeployAndInitProposal$_load INLINECALLDICT
       1 7 BLKDROP2
-      $ProposalDeployer$_internal_binary_CreateProposal INLINECALLDICT
+      $ProposalDeployer$_internal_binary_DeployAndInitProposal INLINECALLDICT
       TRUE
     }>
     2490013878 PUSHINT

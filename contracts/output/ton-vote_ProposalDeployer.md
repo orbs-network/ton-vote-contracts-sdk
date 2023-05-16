@@ -81,9 +81,9 @@ Signature: `FwdMsg{fwdMsg:SendParameters{bounce:bool,to:address,value:int257,mod
 TLB: `dao_init#1a83442d owner:address proposalOwner:address metadata:address = DaoInit`
 Signature: `DaoInit{owner:address,proposalOwner:address,metadata:address}`
 
-## CreateProposal
-TLB: `create_proposal#2ab84bd1 body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string} = CreateProposal`
-Signature: `CreateProposal{body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string}}`
+## DeployAndInitProposal
+TLB: `deploy_and_init_proposal#4b931441 body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string} = DeployAndInitProposal`
+Signature: `DeployAndInitProposal{body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string}}`
 
 ## SendProposalInit
 TLB: `send_proposal_init#d67a8c1a body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string} = SendProposalInit`

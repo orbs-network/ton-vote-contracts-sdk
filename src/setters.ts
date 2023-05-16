@@ -1,8 +1,8 @@
 import { waitForConditionChange, waitForContractToBeDeployed, getSeqno, storeComment } from "./helpers";
-import { Registry, storeProposalInit } from '../contracts/output/ton-vote_Registry'; 
+import { Registry, storeDeployAndInitProposal } from '../contracts/output/ton-vote_Registry'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
-import { ProposalDeployer, storeCreateProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
+import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
 import { SendMode, TonClient } from "ton";
 import { Address, Sender, toNano, beginCell, Cell } from "ton-core";
@@ -212,8 +212,8 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
                 to: proposalDeployerContract.address,
                 value: toNano(0),
                 mode: BigInt(64),
-                body: beginCell().store(storeCreateProposal({
-                    $$type: 'CreateProposal',
+                body: beginCell().store(storeDeployAndInitProposal({
+                    $$type: 'DeployAndInitProposal',
                     body: {
                         $$type: 'Params',
                         proposalStartTime: BigInt(proposalMetadata.proposalStartTime),
