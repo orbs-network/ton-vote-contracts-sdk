@@ -55,7 +55,7 @@ export async function newDao(sender: Sender, client : TonClient, releaseMode: Re
                     
     await registryContract.send(sender, { value: toNano(fee) }, 
     { 
-        $$type: 'CreateDao', 
+        $$type: 'DeployAndInitDao', 
         owner: Address.parse(ownerAddr), 
         proposalOwner: Address.parse(proposalOwner), 
         metadata: Address.parse(metadataAddr)
@@ -65,7 +65,7 @@ export async function newDao(sender: Sender, client : TonClient, releaseMode: Re
     
 }
 
-export async function setCreateDaoFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, newCreateDaoFee: string): Promise<string | boolean> {  
+export async function setDeployAndInitDaoFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, newDeployAndInitDaoFee: string): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -74,17 +74,17 @@ export async function setCreateDaoFee(sender: Sender, client : TonClient, releas
     
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
 
-    const createDaoFee = await registryContract.getCreateDaoFee();
+    const deployAndInitDaoFee = await registryContract.getDeployAndInitDaoFee();
 
-    if (createDaoFee == toNano(newCreateDaoFee)) return true;
+    if (deployAndInitDaoFee == toNano(newDeployAndInitDaoFee)) return true;
 
     await registryContract.send(sender, { value: toNano(fee) }, 
     { 
-        $$type: 'SetCreateDaoFee', 
-        newCreateDaoFee: toNano(newCreateDaoFee)
+        $$type: 'SetDeployAndInitDaoFee', 
+        newDeployAndInitDaoFee: toNano(newDeployAndInitDaoFee)
     });
 
-    return await waitForConditionChange(registryContract.getCreateDaoFee, [], createDaoFee);
+    return await waitForConditionChange(registryContract.getDeployAndInitDaoFee, [], deployAndInitDaoFee);
 }
 
 export async function setRegistryAdmin(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, newRegistryAdmin: string): Promise<string | boolean> {  

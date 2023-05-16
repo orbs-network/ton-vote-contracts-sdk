@@ -13,6 +13,9 @@ import {
     Sender, 
     Contract, 
     ContractABI, 
+    ABIType,
+    ABIGetter,
+    ABIReceiver,
     TupleBuilder,
     DictionaryValue
 } from 'ton-core';
@@ -271,6 +274,53 @@ function dictValueParserDeployOk(): DictionaryValue<DeployOk> {
     }
 }
 
+export type FactoryDeploy = {
+    $$type: 'FactoryDeploy';
+    queryId: bigint;
+    cashback: Address;
+}
+
+export function storeFactoryDeploy(src: FactoryDeploy) {
+    return (builder: Builder) => {
+        let b_0 = builder;
+        b_0.storeUint(1829761339, 32);
+        b_0.storeUint(src.queryId, 64);
+        b_0.storeAddress(src.cashback);
+    };
+}
+
+export function loadFactoryDeploy(slice: Slice) {
+    let sc_0 = slice;
+    if (sc_0.loadUint(32) !== 1829761339) { throw Error('Invalid prefix'); }
+    let _queryId = sc_0.loadUintBig(64);
+    let _cashback = sc_0.loadAddress();
+    return { $$type: 'FactoryDeploy' as const, queryId: _queryId, cashback: _cashback };
+}
+
+function loadTupleFactoryDeploy(source: TupleReader) {
+    let _queryId = source.readBigNumber();
+    let _cashback = source.readAddress();
+    return { $$type: 'FactoryDeploy' as const, queryId: _queryId, cashback: _cashback };
+}
+
+function storeTupleFactoryDeploy(source: FactoryDeploy) {
+    let builder = new TupleBuilder();
+    builder.writeNumber(source.queryId);
+    builder.writeAddress(source.cashback);
+    return builder.build();
+}
+
+function dictValueParserFactoryDeploy(): DictionaryValue<FactoryDeploy> {
+    return {
+        serialize: (src, buidler) => {
+            buidler.storeRef(beginCell().store(storeFactoryDeploy(src)).endCell());
+        },
+        parse: (src) => {
+            return loadFactoryDeploy(src.loadRef().beginParse());
+        }
+    }
+}
+
  type Metadata_init_args = {
     $$type: 'Metadata_init_args';
     avatar: string;
@@ -306,8 +356,8 @@ function initMetadata_init_args(src: Metadata_init_args) {
 }
 
 async function Metadata_init(avatar: string, name: string, about: string, website: string, terms: string, telegram: string, github: string, jetton: Address, nft: Address, hide: boolean) {
-    const __code = Cell.fromBase64('te6ccgECKwEABXgAART/APSkE/S88sgLAQIBYgIDBMbQAdDTAwFxsMABkX+RcOIB+kABINdJgQELuvLgiCDXCwoggwm6IYEE/7qx8uCIgwm68uCJVFBTA28E+GEC+GLtRNDUAfhj0gABjpH4KNcLCoMJuvLgids8CtFVCOMNVRnbPDAoKQQFAgEgCwwBgnAh10nCH5UwINcLH94Cklt/4AGCEJRqmLa6jqLTHwGCEJRqmLa68uCB0z8BMcgBghCv+Q9XWMsfyz/J2zx/4DBwBgEgyPhDAcx/AcoAVZDbPMntVAkBGn/4QnBYA4BCAW1t2zwHAc7IcQHKAVAHAcoAcAHKAlAFINdJgQELuvLgiCDXCwoggwm6IYEE/7qx8uCIgwm68uCJzxZQA/oCcAHKaCNusyVus7GXMzMBcAHKAOMNIW6znH8BygABIG7y0IABzJUxcAHKAOLJAfsACACYfwHKAMhwAcoAcAHKACRus51/AcoABCBu8tCAUATMljQDcAHKAOIkbrOdfwHKAAQgbvLQgFAEzJY0A3ABygDicAHKAAJ/AcoAAslYzAHKyFAKzxbJUArMyFAIzxbJUAfMyMhQB88WyVAGzMhQBc8WyVAEzMhQA88WyVjMyMhQA88WyVjMyFADzxbJWMxQAyDXSYEBC7ry4Igg1wsKIIMJuiGBBP+6sfLgiIMJuvLgic8WUAQKAFgg10mBAQu68uCIINcLCiCDCbohgQT/urHy4IiDCbry4InPFhLKAMkBzMkBzAIBIA0OAgEgHR4CASAPEANHu50u1E0NQB+GPSAAGOkfgo1wsKgwm68uCJ2zwK0VUI4w3bPIKCkcAgFYERICAWIVFgNHr1N2omhqAPwx6QAAx0j8FGuFhUGE3XlwRO2eBWiqhHGG7Z5AKCkTA0ev+vaiaGoA/DHpAADHSPwUa4WFQYTdeXBE7Z4FaKqEcYbtnkAoKRQACBCJXwkABhlfCQIBIBcYA0P12omhqAPwx6QAAx0j8FGuFhUGE3XlwRO2eBWiqhHGG7Z5KCkbA0WkV9qJoagD8MekAAMdI/BRrhYVBhN15cETtngVoqoRxhu2eSgpGQNFpA3aiaGoA/DHpAADHSPwUa4WFQYTdeXBE7Z4FaKqEcYbtnkoKRoACBBJXwkABGyRAAgQOV8JAAgQeV8JAgEgHyACAW4iIwNHtPt9qJoagD8MekAAMdI/BRrhYVBhN15cETtngVoqoRxhu2eQKCkhALm3ejBOC52Hq6WVz2PQnYc6yVCjbNBOE7rGpaVsj5ZkWnXlv74sRzBOBAq4A3AM7HKZywdVyOS2WHBOA3qTvfKost446np7wKs4ZNBOE7Lpy1Zp2W5nQdLNsozdFJAABF8JA0eufvaiaGoA/DHpAADHSPwUa4WFQYTdeXBE7Z4FaKqEcYbtnkAoKSQCAWIlJgAIEFlfCQNForu1E0NQB+GPSAAGOkfgo1wsKgwm68uCJ2zwK0VUI4w3bPIoKScDRaKHtRNDUAfhj0gABjpH4KNcLCoMJuvLgids8CtFVCOMN2zyKCkqAAgQaV8JAObUAdAB1AHQAdQB0NQB0AHUAdAB1AHQAdQw0NQB0AHUAdAB+kABINdJgQELuvLgiCDXCwoggwm6IYEE/7qx8uCIgwm68uCJAfpAASDXSYEBC7ry4Igg1wsKIIMJuiGBBP+6sfLgiIMJuvLgiQHSADAQihCJAOrUAdAB1AHQAdQB0NQB0AHUAdAB1AHQAdQw0NQB0AHUAdAB+kABINdJgQELuvLgiCDXCwoggwm6IYEE/7qx8uCIgwm68uCJAfpAASDXSYEBC7ry4Igg1wsKIIMJuiGBBP+6sfLgiIMJuvLgiQHSADAQihCJbBoACBApXwk=');
-    const __system = Cell.fromBase64('te6cckECLQEABYIAAQHAAQEFoDu3AgEU/wD0pBP0vPLICwMCAWIjBAIBIBIFAgEgDgYCAW4MBwIBYgoIA0Wih7UTQ1AH4Y9IAAY6R+CjXCwqDCbry4InbPArRVQjjDds8iwrCQAIEClfCQNForu1E0NQB+GPSAAGOkfgo1wsKgwm68uCJ2zwK0VUI4w3bPIsKwsACBBpXwkDR65+9qJoagD8MekAAMdI/BRrhYVBhN15cETtngVoqoRxhu2eQCwrDQAIEFlfCQIBIBAPALm3ejBOC52Hq6WVz2PQnYc6yVCjbNBOE7rGpaVsj5ZkWnXlv74sRzBOBAq4A3AM7HKZywdVyOS2WHBOA3qTvfKost446np7wKs4ZNBOE7Lpy1Zp2W5nQdLNsozdFJADR7T7faiaGoA/DHpAADHSPwUa4WFQYTdeXBE7Z4FaKqEcYbtnkCwrEQAEXwkCASAVEwNHu50u1E0NQB+GPSAAGOkfgo1wsKgwm68uCJ2zwK0VUI4w3bPILCsUAAgQeV8JAgEgHhYCAWIZFwND9dqJoagD8MekAAMdI/BRrhYVBhN15cETtngVoqoRxhu2eSwrGAAIEDlfCQIBIBwaA0WkDdqJoagD8MekAAMdI/BRrhYVBhN15cETtngVoqoRxhu2eSwrGwAEbJEDRaRX2omhqAPwx6QAAx0j8FGuFhUGE3XlwRO2eBWiqhHGG7Z5LCsdAAgQSV8JAgFYIR8DR6/69qJoagD8MekAAMdI/BRrhYVBhN15cETtngVoqoRxhu2eQCwrIAAGGV8JA0evU3aiaGoA/DHpAADHSPwUa4WFQYTdeXBE7Z4FaKqEcYbtnkAsKyIACBCJXwkExtAB0NMDAXGwwAGRf5Fw4gH6QAEg10mBAQu68uCIINcLCiCDCbohgQT/urHy4IiDCbry4IlUUFMDbwT4YQL4Yu1E0NQB+GPSAAGOkfgo1wsKgwm68uCJ2zwK0VUI4w1VGds8MCwrJyQBIMj4QwHMfwHKAFWQ2zzJ7VQlAcrIUArPFslQCszIUAjPFslQB8zIyFAHzxbJUAbMyFAFzxbJUATMyFADzxbJWMzIyFADzxbJWMzIUAPPFslYzFADINdJgQELuvLgiCDXCwoggwm6IYEE/7qx8uCIgwm68uCJzxZQBCYAWCDXSYEBC7ry4Igg1wsKIIMJuiGBBP+6sfLgiIMJuvLgic8WEsoAyQHMyQHMAYJwIddJwh+VMCDXCx/eApJbf+ABghCUapi2uo6i0x8BghCUapi2uvLggdM/ATHIAYIQr/kPV1jLH8s/yds8f+AwcCgBGn/4QnBYA4BCAW1t2zwpAc7IcQHKAVAHAcoAcAHKAlAFINdJgQELuvLgiCDXCwoggwm6IYEE/7qx8uCIgwm68uCJzxZQA/oCcAHKaCNusyVus7GXMzMBcAHKAOMNIW6znH8BygABIG7y0IABzJUxcAHKAOLJAfsAKgCYfwHKAMhwAcoAcAHKACRus51/AcoABCBu8tCAUATMljQDcAHKAOIkbrOdfwHKAAQgbvLQgFAEzJY0A3ABygDicAHKAAJ/AcoAAslYzADq1AHQAdQB0AHUAdDUAdAB1AHQAdQB0AHUMNDUAdAB1AHQAfpAASDXSYEBC7ry4Igg1wsKIIMJuiGBBP+6sfLgiIMJuvLgiQH6QAEg10mBAQu68uCIINcLCiCDCbohgQT/urHy4IiDCbry4IkB0gAwEIoQiWwaAObUAdAB1AHQAdQB0NQB0AHUAdAB1AHQAdQw0NQB0AHUAdAB+kABINdJgQELuvLgiCDXCwoggwm6IYEE/7qx8uCIgwm68uCJAfpAASDXSYEBC7ry4Igg1wsKIIMJuiGBBP+6sfLgiIMJuvLgiQHSADAQihCJaGS9/g==');
+    const __code = Cell.fromBase64('te6ccgECLwEABIUAART/APSkE/S88sgLAQIBYgIDA5rQAdDTAwFxsKMB+kABINdJgQELuvLgiCDXCwoggQT/uvLQiYMJuvLgiFRQUwNvBPhhAvhi2zxVGds88uCCyPhDAcx/AcoAVZDbPMntVCsEBQIBIAoLAYoBkjB/4HAh10nCH5UwINcLH96CEJRqmLa6jqfTHwGCEJRqmLa68uCB0z8BMcgBghCv+Q9XWMsfyz/J+EIBcG3bPH/gMHAGAcDIUArPFslQCszIUAjPFslQB8zIyFAHzxbJUAbMyFAFzxbJUATMyFADzxbJWMzIyFADzxbJWMzIUAPPFslYzFADINdJgQELuvLgiCDXCwoggQT/uvLQiYMJuvLgiM8WUAQJATptbSJus5lbIG7y0IBvIgGRMuIQJHADBIBCUCPbPAcByshxAcoBUAcBygBwAcoCUAUg10mBAQu68uCIINcLCiCBBP+68tCJgwm68uCIzxZQA/oCcAHKaCNus5F/kyRus+KXMzMBcAHKAOMNIW6znH8BygABIG7y0IABzJUxcAHKAOLJAfsACACYfwHKAMhwAcoAcAHKACRus51/AcoABCBu8tCAUATMljQDcAHKAOIkbrOdfwHKAAQgbvLQgFAEzJY0A3ABygDicAHKAAJ/AcoAAslYzABOINdJgQELuvLgiCDXCwoggQT/uvLQiYMJuvLgiM8WEsoAyQHMyQHMAgEgHB0CASAMDQIBIA4PAgEgERICEbT7e2ebZ42UMCsQALm3ejBOC52Hq6WVz2PQnYc6yVCjbNBOE7rGpaVsj5ZkWnXlv74sRzBOBAq4A3AM7HKZywdVyOS2WHBOA3qTvfKost446np7wKs4ZNBOE7Lpy1Zp2W5nQdLNsozdFJAAAikCASATFAIBWBUWABGwr7tRNDSAAGAAdbJu40NWlwZnM6Ly9RbWVTYkZwODhSZEQ4OWhoOVU4UkZyRHdXWlhVRFNzREFKYnc5NjJXYmFWOWJEggAhGufu2ebZ42UMArFwIBYhgZAAIlAg+iu2zzbPGyhisaAg+ih2zzbPGyhisbAAImAAIiAgEgHh8CEbudLbPNs8bKGCssAgFYICECAWIkJQIRr1Ntnm2eNlDAKyICEa/67Z5tnjZQwCsjAAIoAAIhAgEgJicCDfW2ebZ42UMrKgIPpFe2ebZ42UMrKAIPpA22ebZ42UMrKQACJAACIAACIwH07UTQ1AH4Y9IAAY5r1AHQAdQB0AHUAdDUAdAB1AHQAdQB0AHUMNDUAdAB1AHQAfpAASDXSYEBC7ry4Igg1wsKIIEE/7ry0ImDCbry4IgB+kABINdJgQELuvLgiCDXCwoggQT/uvLQiYMJuvLgiAHSADAQihCJbBrg+CgtAAInAR7XCwqDCbry4InbPArRVQguANLUAdAB1AHQAdQB0NQB0AHUAdAB1AHQAdQw0NQB0AHUAdAB+kABINdJgQELuvLgiCDXCwoggQT/uvLQiYMJuvLgiAH6QAEg10mBAQu68uCIINcLCiCBBP+68tCJgwm68uCIAdIAMBCKEIk=');
+    const __system = Cell.fromBase64('te6cckECMQEABI8AAQHAAQEFoDu3AgEU/wD0pBP0vPLICwMCAWInBAIBIBYFAgEgEgYCASAPBwIBWA0IAgFiCwkCD6KHbPNs8bKGLgoAAiICD6K7bPNs8bKGLgwAAiYCEa5+7Z5tnjZQwC4OAAIlAgEgERAAdbJu40NWlwZnM6Ly9RbWVTYkZwODhSZEQ4OWhoOVU4UkZyRHdXWlhVRFNzREFKYnc5NjJXYmFWOWJEggABGwr7tRNDSAAGACASAUEwC5t3owTgudh6ullc9j0J2HOslQo2zQThO6xqWlbI+WZFp15b++LEcwTgQKuANwDOxymcsHVcjktlhwTgN6k73yqLLeOOp6e8CrOGTQThOy6ctWadluZ0HSzbKM3RSQAhG0+3tnm2eNlDAuFQACKQIBIBkXAhG7nS2zzbPGyhguGAACJwIBICIaAgFiHRsCDfW2ebZ42UMuHAACIwIBICAeAg+kDbZ5tnjZQy4fAAIgAg+kV7Z5tnjZQy4hAAIkAgFYJSMCEa/67Z5tnjZQwC4kAAIhAhGvU22ebZ42UMAuJgACKAOa0AHQ0wMBcbCjAfpAASDXSYEBC7ry4Igg1wsKIIEE/7ry0ImDCbry4IhUUFMDbwT4YQL4Yts8VRnbPPLggsj4QwHMfwHKAFWQ2zzJ7VQuKigBwMhQCs8WyVAKzMhQCM8WyVAHzMjIUAfPFslQBszIUAXPFslQBMzIUAPPFslYzMjIUAPPFslYzMhQA88WyVjMUAMg10mBAQu68uCIINcLCiCBBP+68tCJgwm68uCIzxZQBCkATiDXSYEBC7ry4Igg1wsKIIEE/7ry0ImDCbry4IjPFhLKAMkBzMkBzAGKAZIwf+BwIddJwh+VMCDXCx/eghCUapi2uo6n0x8BghCUapi2uvLggdM/ATHIAYIQr/kPV1jLH8s/yfhCAXBt2zx/4DBwKwE6bW0ibrOZWyBu8tCAbyIBkTLiECRwAwSAQlAj2zwsAcrIcQHKAVAHAcoAcAHKAlAFINdJgQELuvLgiCDXCwoggQT/uvLQiYMJuvLgiM8WUAP6AnABymgjbrORf5MkbrPilzMzAXABygDjDSFus5x/AcoAASBu8tCAAcyVMXABygDiyQH7AC0AmH8BygDIcAHKAHABygAkbrOdfwHKAAQgbvLQgFAEzJY0A3ABygDiJG6znX8BygAEIG7y0IBQBMyWNANwAcoA4nABygACfwHKAALJWMwB9O1E0NQB+GPSAAGOa9QB0AHUAdAB1AHQ1AHQAdQB0AHUAdAB1DDQ1AHQAdQB0AH6QAEg10mBAQu68uCIINcLCiCBBP+68tCJgwm68uCIAfpAASDXSYEBC7ry4Igg1wsKIIEE/7ry0ImDCbry4IgB0gAwEIoQiWwa4PgoLwEe1wsKgwm68uCJ2zwK0VUIMADS1AHQAdQB0AHUAdDUAdAB1AHQAdQB0AHUMNDUAdAB1AHQAfpAASDXSYEBC7ry4Igg1wsKIIEE/7ry0ImDCbry4IgB+kABINdJgQELuvLgiCDXCwoggQT/uvLQiYMJuvLgiAHSADAQihCJUAWePw==');
     let builder = beginCell();
     builder.storeRef(__system);
     builder.storeUint(0, 1);
@@ -343,6 +393,32 @@ const Metadata_errors: { [key: number]: { message: string } } = {
     137: { message: `Masterchain support is not enabled for this contract` },
 }
 
+const Metadata_types: ABIType[] = [
+    {"name":"StateInit","header":null,"fields":[{"name":"code","type":{"kind":"simple","type":"cell","optional":false}},{"name":"data","type":{"kind":"simple","type":"cell","optional":false}}]},
+    {"name":"Context","header":null,"fields":[{"name":"bounced","type":{"kind":"simple","type":"bool","optional":false}},{"name":"sender","type":{"kind":"simple","type":"address","optional":false}},{"name":"value","type":{"kind":"simple","type":"int","optional":false,"format":257}},{"name":"raw","type":{"kind":"simple","type":"slice","optional":false}}]},
+    {"name":"SendParameters","header":null,"fields":[{"name":"bounce","type":{"kind":"simple","type":"bool","optional":false}},{"name":"to","type":{"kind":"simple","type":"address","optional":false}},{"name":"value","type":{"kind":"simple","type":"int","optional":false,"format":257}},{"name":"mode","type":{"kind":"simple","type":"int","optional":false,"format":257}},{"name":"body","type":{"kind":"simple","type":"cell","optional":true}},{"name":"code","type":{"kind":"simple","type":"cell","optional":true}},{"name":"data","type":{"kind":"simple","type":"cell","optional":true}}]},
+    {"name":"Deploy","header":2490013878,"fields":[{"name":"queryId","type":{"kind":"simple","type":"uint","optional":false,"format":64}}]},
+    {"name":"DeployOk","header":2952335191,"fields":[{"name":"queryId","type":{"kind":"simple","type":"uint","optional":false,"format":64}}]},
+    {"name":"FactoryDeploy","header":1829761339,"fields":[{"name":"queryId","type":{"kind":"simple","type":"uint","optional":false,"format":64}},{"name":"cashback","type":{"kind":"simple","type":"address","optional":false}}]},
+]
+
+const Metadata_getters: ABIGetter[] = [
+    {"name":"avatar","arguments":[],"returnType":{"kind":"simple","type":"string","optional":false}},
+    {"name":"name","arguments":[],"returnType":{"kind":"simple","type":"string","optional":false}},
+    {"name":"about","arguments":[],"returnType":{"kind":"simple","type":"string","optional":false}},
+    {"name":"website","arguments":[],"returnType":{"kind":"simple","type":"string","optional":false}},
+    {"name":"terms","arguments":[],"returnType":{"kind":"simple","type":"string","optional":false}},
+    {"name":"telegram","arguments":[],"returnType":{"kind":"simple","type":"string","optional":false}},
+    {"name":"github","arguments":[],"returnType":{"kind":"simple","type":"string","optional":false}},
+    {"name":"jetton","arguments":[],"returnType":{"kind":"simple","type":"address","optional":false}},
+    {"name":"nft","arguments":[],"returnType":{"kind":"simple","type":"address","optional":false}},
+    {"name":"hide","arguments":[],"returnType":{"kind":"simple","type":"bool","optional":false}},
+]
+
+const Metadata_receivers: ABIReceiver[] = [
+    {"receiver":"internal","message":{"kind":"typed","type":"Deploy"}},
+]
+
 export class Metadata implements Contract {
     
     static async init(avatar: string, name: string, about: string, website: string, terms: string, telegram: string, github: string, jetton: Address, nft: Address, hide: boolean) {
@@ -362,7 +438,10 @@ export class Metadata implements Contract {
     readonly address: Address; 
     readonly init?: { code: Cell, data: Cell };
     readonly abi: ContractABI = {
-        errors: Metadata_errors
+        types:  Metadata_types,
+        getters: Metadata_getters,
+        receivers: Metadata_receivers,
+        errors: Metadata_errors,
     };
     
     private constructor(address: Address, init?: { code: Cell, data: Cell }) {

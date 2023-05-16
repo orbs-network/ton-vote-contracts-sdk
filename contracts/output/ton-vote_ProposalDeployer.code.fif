@@ -4,52 +4,57 @@ PROGRAM{
   DECLPROC __tact_store_address
   DECLPROC __tact_create_address
   DECLPROC __tact_compute_contract_address
+  DECLPROC __tact_my_balance
   DECLPROC __tact_not_null
+  DECLPROC __tact_context_get
   DECLPROC __tact_context_get_sender
   DECLPROC __tact_store_bool
-  DECLPROC __tact_address_eq
+  DECLPROC __tact_slice_eq_bits
   DECLPROC __tact_dict_set_code
   DECLPROC __tact_dict_get_code
-  DECLPROC __gen_read_Deploy
-  DECLPROC __gen_write_DeployOk
-  DECLPROC __gen_writecell_DeployOk
-  DECLPROC __gen_write_Params
-  DECLPROC __gen_read_Params
-  DECLPROC __gen_read_CreateProposal
-  DECLPROC __gen_write_ProposalInit
-  DECLPROC __gen_writecell_ProposalInit
-  DECLPROC __gen_write_ProposalDeployer
-  DECLPROC __gen_read_ProposalDeployer
-  DECLPROC __gen_write_$init$Proposal
-  DECLPROC __gen_read_$init$ProposalDeployer
-  DECLPROC $__gen_ProposalDeployer_init
-  DECLPROC __gen_load_ProposalDeployer
-  DECLPROC __gen_store_ProposalDeployer
-  DECLPROC $contractAddress
-  DECLPROC $send
-  DECLPROC __gen_constructor_SendParameters$bounce_to_value_mode_body
-  DECLPROC $reply
-  DECLPROC $__gen_Proposal_init_child
-  DECLPROC __gen_constructor_DeployOk$queryId
-  DECLPROC $__gen_ProposalDeployer_getProposalStateInit
-  DECLPROC $__gen_ProposalDeployer_dao
-  123641 DECLMETHOD $__gen_get_dao
-  DECLPROC $__gen_ProposalDeployer_nextProposalId
-  97465 DECLMETHOD $__gen_get_nextProposalId
-  DECLPROC $__gen_ProposalDeployer_proposalAddr
-  94082 DECLMETHOD $__gen_get_proposalAddr
-  DECLPROC __gen_constructor_SendParameters$to_value_bounce_mode_body_code_data
-  DECLPROC __gen_constructor_ProposalInit$body
-  DECLPROC $__gen_ProposalDeployer_receive_CreateProposal
-  DECLPROC $__gen_ProposalDeployer_receive_Deploy
-  DECLPROC __gen_router_ProposalDeployer
-  DECLPROC recv_internal
+  DECLPROC $Deploy$_load
+  DECLPROC $DeployOk$_store
+  DECLPROC $DeployOk$_store_cell
+  DECLPROC $Params$_store
+  DECLPROC $Params$_load
+  DECLPROC $CreateProposal$_load
+  DECLPROC $ProposalInit$_store
+  DECLPROC $ProposalInit$_store_cell
+  DECLPROC $ProposalDeployer$_store
+  DECLPROC $ProposalDeployer$_load
+  DECLPROC $StateInit$_not_null
+  DECLPROC $Proposal$init$_store
+  DECLPROC $ProposalDeployer$init$_load
+  DECLPROC $ProposalDeployer$_contract_init
+  DECLPROC $ProposalDeployer$_contract_load
+  DECLPROC $ProposalDeployer$_contract_store
+  DECLPROC $global_contractAddress
+  DECLPROC $global_send
+  DECLPROC $Proposal$_init_child
+  DECLPROC $SendParameters$_constructor_bounce_to_value_mode_body_code_data
+  DECLPROC $ProposalDeployer$_fun_getProposalStateInit
+  DECLPROC $ProposalDeployer$_fun_dao
+  DECLPROC $ProposalDeployer$_fun_nextProposalId
+  DECLPROC $ProposalDeployer$_fun_proposalAddr
+  DECLPROC $ProposalDeployer$_fun_forward
+  DECLPROC $ProposalDeployer$_fun_notify
+  DECLPROC $SendParameters$_constructor_to_value_bounce_mode_body_code_data
+  DECLPROC $ProposalInit$_constructor_body
+  DECLPROC $DeployOk$_constructor_queryId
+  DECLPROC $ProposalDeployer$_internal_binary_CreateProposal
+  DECLPROC $ProposalDeployer$_internal_binary_Deploy
+  123641 DECLMETHOD %dao
+  97465 DECLMETHOD %nextProposalId
+  94082 DECLMETHOD %proposalAddr
   113617 DECLMETHOD supported_interfaces
-  DECLPROC get_abi_ipfs
-  DECLPROC lazy_deployment_completed
+  121275 DECLMETHOD get_abi_ipfs
+  115390 DECLMETHOD lazy_deployment_completed
+  DECLPROC $ProposalDeployer$_contract_router_internal
+  DECLPROC recv_internal
   DECLGLOBVAR __tact_context
   DECLGLOBVAR __tact_context_sender
   DECLGLOBVAR __tact_context_sys
+  DECLGLOBVAR __tact_randomized
   __tact_verify_address PROCINLINE:<{
     DUP
     SBITS
@@ -59,16 +64,12 @@ PROGRAM{
     DUP
     11 PLDU
     DUP
-    10 PUSHPOW2
-    EQUAL
-    OVER
     1279 PUSHINT
     EQUAL
-    OR
-    136 THROWIFNOT
+    137 THROWIF
     10 PUSHPOW2
     EQUAL
-    137 THROWIFNOT
+    136 THROWIFNOT
   }>
   __tact_load_address PROCINLINE:<{
     LDMSGADDR
@@ -112,10 +113,18 @@ PROGRAM{
     HASHCU
     __tact_create_address INLINECALLDICT
   }>
+  __tact_my_balance PROCINLINE:<{
+    BALANCE
+    FIRST
+  }>
   __tact_not_null PROCINLINE:<{
     DUP
     ISNULL
     128 THROWIF
+  }>
+  __tact_context_get PROCINLINE:<{
+    __tact_context GETGLOB
+    4 UNTUPLE
   }>
   __tact_context_get_sender PROCINLINE:<{
     __tact_context_sender GETGLOB
@@ -124,7 +133,7 @@ PROGRAM{
     SWAP
     1 STI
   }>
-  __tact_address_eq PROCINLINE:<{
+  __tact_slice_eq_bits PROCINLINE:<{
     SDEQ
   }>
   __tact_dict_set_code PROCINLINE:<{
@@ -139,7 +148,7 @@ PROGRAM{
     NULLSWAPIFNOT
     135 THROWIFNOT
   }>
-  __gen_read_Deploy PROCINLINE:<{
+  $Deploy$_load PROCINLINE:<{
     32 LDU
     SWAP
     2490013878 PUSHINT
@@ -148,19 +157,19 @@ PROGRAM{
     64 LDU
     SWAP
   }>
-  __gen_write_DeployOk PROCINLINE:<{
+  $DeployOk$_store PROCINLINE:<{
     2952335191 PUSHINT
     ROT
     32 STU
     64 STU
   }>
-  __gen_writecell_DeployOk PROCINLINE:<{
+  $DeployOk$_store_cell PROCINLINE:<{
     NEWC
     SWAP
-    __gen_write_DeployOk INLINECALLDICT
+    $DeployOk$_store INLINECALLDICT
     ENDC
   }>
-  __gen_write_Params PROCREF:<{
+  $Params$_store PROCREF:<{
     s6 s7 XCHG2
     64 STU
     s1 s4 XCHG
@@ -196,7 +205,7 @@ PROGRAM{
     SWAP
     STREF
   }>
-  __gen_read_Params PROCREF:<{
+  $Params$_load PROCREF:<{
     64 LDU
     64 LDU
     64 LDU
@@ -224,51 +233,57 @@ PROGRAM{
     s1 s4 XCHG
     s3 s3 s0 XCHG3
   }>
-  __gen_read_CreateProposal PROCINLINE:<{
+  $CreateProposal$_load PROCINLINE:<{
     32 LDU
     SWAP
     716721105 PUSHINT
     EQUAL
     129 THROWIFNOT
-    __gen_read_Params INLINECALLDICT
+    $Params$_load INLINECALLDICT
   }>
-  __gen_write_ProposalInit PROCINLINE:<{
+  $ProposalInit$_store PROCINLINE:<{
     4087233874 PUSHINT
     s0 s8 XCHG2
     32 STU
     s0 s7 XCHG
-    __gen_write_Params INLINECALLDICT
+    $Params$_store INLINECALLDICT
   }>
-  __gen_writecell_ProposalInit PROCINLINE:<{
+  $ProposalInit$_store_cell PROCINLINE:<{
     NEWC
     7 -ROLL
-    __gen_write_ProposalInit INLINECALLDICT
+    $ProposalInit$_store INLINECALLDICT
     ENDC
   }>
-  __gen_write_ProposalDeployer PROCINLINE:<{
+  $ProposalDeployer$_store PROCINLINE:<{
     -ROT
     __tact_store_address INLINECALLDICT
     32 STU
   }>
-  __gen_read_ProposalDeployer PROCINLINE:<{
+  $ProposalDeployer$_load PROCINLINE:<{
     __tact_load_address INLINECALLDICT
     SWAP
     32 LDU
     -ROT
   }>
-  __gen_write_$init$Proposal PROCINLINE:<{
+  $StateInit$_not_null PROCINLINE:<{
+    DUP
+    ISNULL
+    128 THROWIF
+    2 UNTUPLE
+  }>
+  $Proposal$init$_store PROCINLINE:<{
     -ROT
     __tact_store_address INLINECALLDICT
     257 PUSHINT
     STIX
   }>
-  __gen_read_$init$ProposalDeployer PROCINLINE:<{
+  $ProposalDeployer$init$_load PROCINLINE:<{
     __tact_load_address INLINECALLDICT
   }>
-  $__gen_ProposalDeployer_init PROCREF:<{
+  $ProposalDeployer$_contract_init PROCREF:<{
     0 PUSHINT
   }>
-  __gen_load_ProposalDeployer PROCINLINE:<{
+  $ProposalDeployer$_contract_load PROCREF:<{
     c4 PUSH
     CTOS
     LDREF
@@ -276,22 +291,21 @@ PROGRAM{
     __tact_context_sys SETGLOB
     1 LDI
     SWAP
-    IF:<{
-      __gen_read_ProposalDeployer INLINECALLDICT
+    IFJMP:<{
+      $ProposalDeployer$_load INLINECALLDICT
       1 2 BLKDROP2
-    }>ELSE<{
-      MYADDR
-      11 PLDU
-      10 PUSHPOW2
-      EQUAL
-      137 THROWIFNOT
-      __gen_read_$init$ProposalDeployer INLINECALLDICT
-      SWAP
-      ENDS
-      $__gen_ProposalDeployer_init INLINECALLDICT
     }>
+    MYADDR
+    11 PLDU
+    10 PUSHPOW2
+    EQUAL
+    137 THROWIFNOT
+    $ProposalDeployer$init$_load INLINECALLDICT
+    SWAP
+    ENDS
+    $ProposalDeployer$_contract_init INLINECALLDICT
   }>
-  __gen_store_ProposalDeployer PROCINLINE:<{
+  $ProposalDeployer$_contract_store PROCINLINE:<{
     NEWC
     __tact_context_sys GETGLOB
     SWAP
@@ -300,16 +314,16 @@ PROGRAM{
     SWAP
     1 STI
     -ROT
-    __gen_write_ProposalDeployer INLINECALLDICT
+    $ProposalDeployer$_store INLINECALLDICT
     ENDC
     c4 POP
   }>
-  $contractAddress PROCREF:<{
+  $global_contractAddress PROCINLINE:<{
     0 PUSHINT
     -ROT
     __tact_compute_contract_address INLINECALLDICT
   }>
-  $send PROCREF:<{
+  $global_send PROCREF:<{
     NEWC
     1 PUSHINT
     SWAP
@@ -329,10 +343,13 @@ PROGRAM{
     s3 PUSH
     ISNULL
     NOT
-    s5 PUSH
-    ISNULL
-    NOT
-    OR
+    IF:<{
+      TRUE
+    }>ELSE<{
+      s4 PUSH
+      ISNULL
+      NOT
+    }>
     IF:<{
       TRUE
       __tact_store_bool INLINECALLDICT
@@ -408,22 +425,7 @@ PROGRAM{
     SWAP
     SENDRAWMSG
   }>
-  __gen_constructor_SendParameters$bounce_to_value_mode_body PROCINLINE:<{
-    PUSHNULL
-    PUSHNULL
-  }>
-  $reply PROCREF:<{
-    TRUE
-    __tact_context_get_sender INLINECALLDICT
-    0 PUSHINT
-    ROT
-    s0 s3 XCHG
-    66 PUSHINT
-    SWAP
-    __gen_constructor_SendParameters$bounce_to_value_mode_body INLINECALLDICT
-    $send INLINECALLDICT
-  }>
-  $__gen_Proposal_init_child PROC:<{
+  $Proposal$_init_child PROCREF:<{
     s0 s2 XCHG
     CTOS
     LDDICT
@@ -447,57 +449,74 @@ PROGRAM{
     SWAP
     1 STI
     s0 s0 s3 XCHG3
-    __gen_write_$init$Proposal INLINECALLDICT
+    $Proposal$init$_store INLINECALLDICT
     ENDC
   }>
-  __gen_constructor_DeployOk$queryId PROCINLINE:<{
+  $SendParameters$_constructor_bounce_to_value_mode_body_code_data PROCINLINE:<{
   }>
-  $__gen_ProposalDeployer_getProposalStateInit PROCREF:<{
+  $ProposalDeployer$_fun_getProposalStateInit PROCREF:<{
     __tact_context_sys GETGLOB
     MYADDR
     ROT
-    $__gen_Proposal_init_child CALLDICT
+    $Proposal$_init_child INLINECALLDICT
   }>
-  $__gen_ProposalDeployer_dao PROCREF:<{
-    DROP
+  $ProposalDeployer$_fun_dao PROCREF:<{
+    OVER
   }>
-  $__gen_get_dao PROC:<{
-    __gen_load_ProposalDeployer INLINECALLDICT
-    $__gen_ProposalDeployer_dao INLINECALLDICT
+  $ProposalDeployer$_fun_nextProposalId PROCREF:<{
+    DUP
   }>
-  $__gen_ProposalDeployer_nextProposalId PROCREF:<{
-    NIP
+  $ProposalDeployer$_fun_proposalAddr PROCREF:<{
+    $ProposalDeployer$_fun_getProposalStateInit INLINECALLDICT
+    $global_contractAddress INLINECALLDICT
   }>
-  $__gen_get_nextProposalId PROC:<{
-    __gen_load_ProposalDeployer INLINECALLDICT
-    $__gen_ProposalDeployer_nextProposalId INLINECALLDICT
+  $ProposalDeployer$_fun_forward PROCREF:<{
+    PUSHNULL
+    PUSHNULL
+    s2 PUSH
+    ISNULL
+    NOT
+    IF:<{
+      2DROP
+      $StateInit$_not_null INLINECALLDICT
+      SWAP
+    }>ELSE<{
+      s2 POP
+    }>
+    s2 s4 XCHG
+    0 PUSHINT
+    s0 s3 XCHG
+    s0 s4 XCHG
+    66 PUSHINT
+    s2 s3 XCHG2
+    $SendParameters$_constructor_bounce_to_value_mode_body_code_data INLINECALLDICT
+    $global_send INLINECALLDICT
   }>
-  $__gen_ProposalDeployer_proposalAddr PROCREF:<{
-    $__gen_ProposalDeployer_getProposalStateInit INLINECALLDICT
-    2 2 BLKDROP2
-    $contractAddress INLINECALLDICT
+  $ProposalDeployer$_fun_notify PROCINLINE:<{
+    __tact_context_get_sender INLINECALLDICT
+    SWAP
+    FALSE
+    PUSHNULL
+    $ProposalDeployer$_fun_forward INLINECALLDICT
   }>
-  $__gen_get_proposalAddr PROC:<{
-    __gen_load_ProposalDeployer INLINECALLDICT
-    ROT
-    $__gen_ProposalDeployer_proposalAddr INLINECALLDICT
-  }>
-  __gen_constructor_SendParameters$to_value_bounce_mode_body_code_data PROCINLINE:<{
+  $SendParameters$_constructor_to_value_bounce_mode_body_code_data PROCINLINE:<{
     s4 s6 XCHG
     s4 s5 XCHG
   }>
-  __gen_constructor_ProposalInit$body PROCINLINE:<{
+  $ProposalInit$_constructor_body PROCINLINE:<{
   }>
-  $__gen_ProposalDeployer_receive_CreateProposal PROCINLINE:<{
+  $DeployOk$_constructor_queryId PROCINLINE:<{
+  }>
+  $ProposalDeployer$_internal_binary_CreateProposal PROCINLINE:<{
     13403 PUSHINT
     __tact_context_get_sender INLINECALLDICT
-    s10 PUSH
-    __tact_address_eq INLINECALLDICT
+    s10 s(-1) PUXC
+    __tact_slice_eq_bits INLINECALLDICT
     THROWANYIFNOT
     s8 s7 s0 XC2PU
-    $__gen_ProposalDeployer_getProposalStateInit INLINECALLDICT
+    $ProposalDeployer$_fun_getProposalStateInit INLINECALLDICT
     2DUP
-    $contractAddress INLINECALLDICT
+    $global_contractAddress INLINECALLDICT
     s3 s9 XCHG
     s8 s7 s6 XCHG3
     0 PUSHINT
@@ -505,23 +524,60 @@ PROGRAM{
     s7 s13 XCHG2
     64 PUSHINT
     s0 s13 XCHG
-    __gen_constructor_ProposalInit$body INLINECALLDICT
-    __gen_writecell_ProposalInit INLINECALLDICT
+    $ProposalInit$_constructor_body INLINECALLDICT
+    $ProposalInit$_store_cell INLINECALLDICT
     s3 s6 XCHG
     s2 s5 XCHG
     s4 s8 XCHG
     s3 s7 XCHG
     s0 s0 s8 XCHG3
-    __gen_constructor_SendParameters$to_value_bounce_mode_body_code_data INLINECALLDICT
-    $send INLINECALLDICT
+    $SendParameters$_constructor_to_value_bounce_mode_body_code_data INLINECALLDICT
+    $global_send INLINECALLDICT
     INC
   }>
-  $__gen_ProposalDeployer_receive_Deploy PROCINLINE:<{
-    __gen_constructor_DeployOk$queryId INLINECALLDICT
-    __gen_writecell_DeployOk INLINECALLDICT
-    $reply INLINECALLDICT
+  $ProposalDeployer$_internal_binary_Deploy PROCINLINE:<{
+    $DeployOk$_constructor_queryId INLINECALLDICT
+    $DeployOk$_store_cell INLINECALLDICT
+    $ProposalDeployer$_fun_notify INLINECALLDICT
   }>
-  __gen_router_ProposalDeployer PROCREF:<{
+  %dao PROC:<{
+    $ProposalDeployer$_contract_load INLINECALLDICT
+    $ProposalDeployer$_fun_dao INLINECALLDICT
+    2 1 BLKDROP2
+  }>
+  %nextProposalId PROC:<{
+    $ProposalDeployer$_contract_load INLINECALLDICT
+    $ProposalDeployer$_fun_nextProposalId INLINECALLDICT
+    2 1 BLKDROP2
+  }>
+  %proposalAddr PROC:<{
+    $ProposalDeployer$_contract_load INLINECALLDICT
+    ROT
+    $ProposalDeployer$_fun_proposalAddr INLINECALLDICT
+    2 1 BLKDROP2
+  }>
+  supported_interfaces PROC:<{
+    123515602279859691144772641439386770278 PUSHINT
+    209801025412363888721030803524359905849 PUSHINT
+    42980537499636128163026532310500881091 PUSHINT
+    36993126140238121407019133875791708966 PUSHINT
+    209474421377847335869795010607481022628 PUSHINT
+  }>
+  get_abi_ipfs PROC:<{
+    x{697066733a2f2f516d4e715879376f3336313154424e50513631334e65563262674259575072784534464c7a5a536f335358653233} PUSHSLICE
+  }>
+  lazy_deployment_completed PROC:<{
+    c4 PUSH
+    CTOS
+    1 LDI
+    SWAP
+  }>
+  $ProposalDeployer$_contract_router_internal PROCREF:<{
+    SWAP
+    IFJMP:<{
+      DROP
+      TRUE
+    }>
     0 PUSHINT
     OVER
     SBITS
@@ -531,28 +587,22 @@ PROGRAM{
       DUP
       32 PLDU
     }>
-    s0 s2 XCHG
-    IFJMP:<{
-      2DROP
-      TRUE
-    }>
-    OVER
+    DUP
     716721105 PUSHINT
     EQUAL
     IFJMP:<{
-      NIP
-      __gen_read_CreateProposal INLINECALLDICT
+      DROP
+      $CreateProposal$_load INLINECALLDICT
       1 7 BLKDROP2
-      $__gen_ProposalDeployer_receive_CreateProposal INLINECALLDICT
+      $ProposalDeployer$_internal_binary_CreateProposal INLINECALLDICT
       TRUE
     }>
-    SWAP
     2490013878 PUSHINT
     EQUAL
     IFJMP:<{
-      __gen_read_Deploy INLINECALLDICT
+      $Deploy$_load INLINECALLDICT
       NIP
-      $__gen_ProposalDeployer_receive_Deploy INLINECALLDICT
+      $ProposalDeployer$_internal_binary_Deploy INLINECALLDICT
       TRUE
     }>
     DROP
@@ -565,12 +615,7 @@ PROGRAM{
     SWAP
     1 PUSHINT
     AND
-    1 EQINT
-    IF:<{
-      TRUE
-    }>ELSE<{
-      FALSE
-    }>
+    NEGATE
     SWAP
     LDMSGADDR
     SWAP
@@ -581,26 +626,10 @@ PROGRAM{
     __tact_context SETGLOB
     s0 s2 XCHG
     __tact_context_sender SETGLOB
-    __gen_load_ProposalDeployer INLINECALLDICT
+    $ProposalDeployer$_contract_load INLINECALLDICT
     2SWAP
-    __gen_router_ProposalDeployer INLINECALLDICT
-    DROP
-    __gen_store_ProposalDeployer INLINECALLDICT
-  }>
-  supported_interfaces PROC:<{
-    123515602279859691144772641439386770278 PUSHINT
-    209801025412363888721030803524359905849 PUSHINT
-    42980537499636128163026532310500881091 PUSHINT
-    36993126140238121407019133875791708966 PUSHINT
-    209474421377847335869795010607481022628 PUSHINT
-  }>
-  get_abi_ipfs PROC:<{
-    x{697066733a2f2f516d6364725067536f4b345563324b67664c51385172754165765856795232504a774654567442464b315a515151} PUSHSLICE
-  }>
-  lazy_deployment_completed PROC:<{
-    c4 PUSH
-    CTOS
-    1 LDI
-    SWAP
+    $ProposalDeployer$_contract_router_internal INLINECALLDICT
+    130 THROWIFNOT
+    $ProposalDeployer$_contract_store INLINECALLDICT
   }>
 }END>c

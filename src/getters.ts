@@ -20,7 +20,7 @@ export async function getRegistryAdmin(client : TonClient, releaseMode: ReleaseM
 
 export async function getCreateDaoFee(client : TonClient, releaseMode: ReleaseMode): Promise<string> {  
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
-    return (await registryContract.getCreateDaoFee()).toString();
+    return (await registryContract.getDeployAndInitDaoFee()).toString();
 }
 
 export async function getRegistryId(client : TonClient, releaseMode: ReleaseMode): Promise<string> {  
