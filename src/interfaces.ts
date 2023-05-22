@@ -16,6 +16,14 @@ export interface DaoRoles {
     proposalOwner: string;
 }
 
+export interface RegistryState {
+    registryAddr: string,
+    registryId: number,
+    nextDaoId: number,
+    admin: string,
+    deployAndInitDaoFee: string
+}
+
 export interface DaoState {
 
     registry: string;

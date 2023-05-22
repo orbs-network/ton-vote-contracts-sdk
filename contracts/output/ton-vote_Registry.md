@@ -1,9 +1,9 @@
 # TACT Compilation Report
 Contract: Registry
-BOC Size: 1695 bytes
+BOC Size: 1657 bytes
 
 # Types
-Total Types: 26
+Total Types: 27
 
 ## StateInit
 TLB: `_ code:^cell data:^cell = StateInit`
@@ -56,6 +56,10 @@ Signature: `SendToDaoSetFwdMsgFee{daoId:uint32,newFwdMsgFee:uint64}`
 ## SetRegistryAdmin
 TLB: `set_registry_admin#c6d673ca newAdmin:address = SetRegistryAdmin`
 Signature: `SetRegistryAdmin{newAdmin:address}`
+
+## RegistryContractState
+TLB: `_ registryId:uint32 nextDaoId:uint32 admin:address deployAndInitDaoFee:uint64 = RegistryContractState`
+Signature: `RegistryContractState{registryId:uint32,nextDaoId:uint32,admin:address,deployAndInitDaoFee:uint64}`
 
 ## SetOwner
 TLB: `set_owner#c2b41d43 newOwner:address = SetOwner`
@@ -110,18 +114,14 @@ TLB: `_ avatar:^string name:^string about:^string website:^string terms:^string 
 Signature: `MetadataState{avatar:^string,name:^string,about:^string,website:^string,terms:^string,telegram:^string,github:^string,jetton:address,nft:address,hide:bool}`
 
 # Get Methods
-Total Get Methods: 5
+Total Get Methods: 3
+
+## state
 
 ## nextDaoId
 
 ## daoAddress
 Argument: daoId
-
-## registryId
-
-## admin
-
-## deployAndInitDaoFee
 
 # Error Codes
 2: Stack undeflow

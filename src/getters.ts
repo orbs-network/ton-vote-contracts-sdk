@@ -5,27 +5,35 @@ import { Metadata } from '../contracts/output/ton-vote_Metadata';
 import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
 import { TonClient, TonClient4, Address } from "ton";
-import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType, ReleaseMode, DaoState } from "./interfaces";
+import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType, ReleaseMode, DaoState, RegistryState } from "./interfaces";
 
 
-export async function getRegistry(client : TonClient, releaseMode: ReleaseMode): Promise<string> {  
+export async function getRegistry(client : TonClient, releaseMode: ReleaseMode): Promise<string | undefined> {  
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
+
+    if (!(await client. isContractDeployed(registryContract.address))) {
+        return; 
+    }
+
     return registryContract.address.toString();
 }
 
-export async function getRegistryAdmin(client : TonClient, releaseMode: ReleaseMode): Promise<string> {  
+export async function getRegistryState(client : TonClient, releaseMode: ReleaseMode): Promise<RegistryState | undefined> {  
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
-    return (await registryContract.getAdmin()).toString();
-}
 
-export async function getCreateDaoFee(client : TonClient, releaseMode: ReleaseMode): Promise<string> {  
-    let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
-    return (await registryContract.getDeployAndInitDaoFee()).toString();
-}
+    if (!(await client. isContractDeployed(registryContract.address))) {
+        return; 
+    }
 
-export async function getRegistryId(client : TonClient, releaseMode: ReleaseMode): Promise<string> {  
-    let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
-    return (await registryContract.getRegistryId()).toString();
+    const registryState = await registryContract.getState();
+
+    return {
+        registryAddr: registryContract.address.toString(), 
+        registryId: Number(registryState.registryId),
+        nextDaoId: Number(registryState.nextDaoId),
+        admin: registryState.admin.toString(),
+        deployAndInitDaoFee: registryState.deployAndInitDaoFee.toString()
+    };
 }
 
 export async function getDaos(client : TonClient, releaseMode: ReleaseMode, nextId: null | number = null, batchSize=100, order: 'desc' | 'asc' ='asc'): Promise<{endDaoId: number, daoAddresses: string[]}> {  

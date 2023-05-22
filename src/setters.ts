@@ -38,7 +38,7 @@ export async function newRegistry(sender: Sender, client : TonClient, releaseMod
         newAdmin: Address.parse(admin)
     });
 
-    return await waitForConditionChange(registryContract.getAdmin, [], ZERO_ADDR);    
+    return await waitForConditionChange(registryContract.getState, [], ZERO_ADDR, 'admin');
 }
 
 export async function newDao(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
@@ -74,7 +74,7 @@ export async function setDeployAndInitDaoFee(sender: Sender, client : TonClient,
     
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
 
-    const deployAndInitDaoFee = await registryContract.getDeployAndInitDaoFee();
+    const deployAndInitDaoFee = (await registryContract.getState()).deployAndInitDaoFee;
 
     if (deployAndInitDaoFee == toNano(newDeployAndInitDaoFee)) return true;
 
@@ -84,7 +84,7 @@ export async function setDeployAndInitDaoFee(sender: Sender, client : TonClient,
         newDeployAndInitDaoFee: toNano(newDeployAndInitDaoFee)
     });
 
-    return await waitForConditionChange(registryContract.getDeployAndInitDaoFee, [], deployAndInitDaoFee);
+    return await waitForConditionChange(registryContract.getState, [], deployAndInitDaoFee, 'deployAndInitDaoFee');
 }
 
 export async function setRegistryAdmin(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, newRegistryAdmin: string): Promise<string | boolean> {  
@@ -96,7 +96,7 @@ export async function setRegistryAdmin(sender: Sender, client : TonClient, relea
     
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
 
-    const registryAdmin = await registryContract.getAdmin();
+    const registryAdmin = (await registryContract.getState()).admin;
 
     if (Address.parse(newRegistryAdmin).equals(registryAdmin)) {
         console.log('new registry admin address equals to the existing admin address');
@@ -109,7 +109,7 @@ export async function setRegistryAdmin(sender: Sender, client : TonClient, relea
         newAdmin: Address.parse(newRegistryAdmin)
     });
 
-    return await waitForConditionChange(registryContract.getAdmin, [], registryAdmin);
+    return await waitForConditionChange(registryContract.getState, [], registryAdmin, 'admin');
 }
 
 export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, daoIds: string[], newFwdMsgFee: string): Promise<boolean[]> {  
