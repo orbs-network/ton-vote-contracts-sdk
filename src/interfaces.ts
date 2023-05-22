@@ -22,8 +22,8 @@ export interface DaoState {
     owner: string;
     proposalOwner: string;
     metadata: string;
-    daoIndex: Number;
-    fwdMsgFee: Number;
+    daoIndex: number;
+    fwdMsgFee: number;
 }
 
 export interface MetadataArgs {
