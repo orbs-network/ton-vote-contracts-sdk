@@ -124,7 +124,8 @@ export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMo
 
     const promises = daoIds.map(async (daoId) => {
         let daoContract = client.open(await Dao.fromInit(registryContract.address, BigInt(daoId)));
-        const fwdMsgFee = await daoContract.getFwdMsgFee();
+
+        const fwdMsgFee = (await daoContract.getState()).fwdMsgFee;
 
         if (fwdMsgFee == newFwdMsgFeeNano) return true;
 
@@ -135,7 +136,7 @@ export async function setFwdMsgFee(sender: Sender, client : TonClient, releaseMo
             newFwdMsgFee: newFwdMsgFeeNano
         });
       
-        return waitForConditionChange(daoContract.getFwdMsgFee, [], fwdMsgFee);
+        return waitForConditionChange(daoContract.getState, [], fwdMsgFee, 'fwdMsgFee');
       });
       
       return await Promise.all(promises);  
@@ -180,8 +181,9 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
         return false;
     }
 
-    const proposalOwner = await daoContract.getProposalOwner();
-    const owner = await daoContract.getOwner();
+    const daoState = await daoContract.getState();
+    const owner = daoState.owner;
+    const proposalOwner = daoState.proposalOwner;
 
     if ((proposalOwner.toString() != sender.address.toString()) && (owner.toString() != sender.address.toString())) {        
         console.log("Only proposalOwner or owner are allowed to create proposal");
@@ -222,7 +224,8 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
                         votingSystem: JSON.stringify(proposalMetadata.votingSystem),
                         votingPowerStrategies: JSON.stringify(proposalMetadata.votingPowerStrategies),
                         title: proposalMetadata.title,
-                        description: proposalMetadata.description
+                        description: proposalMetadata.description,
+                        quorum: proposalMetadata.quorum
                     }
                 })).endCell(),
                 code: code,
@@ -252,7 +255,9 @@ export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: s
         return false;
     }
 
-    let owner = await daoContract.getOwner();
+    const daoState = await daoContract.getState();
+    const owner = daoState.owner;
+
     if (owner.toString() != sender.address.toString()) {        
         console.log("Only owner is allowed to set new owner");
         return false;
@@ -264,7 +269,7 @@ export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: s
         }
     );      
     
-    return await waitForConditionChange(daoContract.getOwner, [], owner) && owner.toString();
+    return await waitForConditionChange(daoContract.getState, [], owner, 'owner') && owner.toString();
 }
 
 export async function daoSetProposalOwner(sender: Sender, client : TonClient, fee: string, daoAddr: string, newProposalOwner: string): Promise<string | boolean> {  
@@ -281,8 +286,10 @@ export async function daoSetProposalOwner(sender: Sender, client : TonClient, fe
         return false;
     }
 
-    let proposalOwner = await daoContract.getProposalOwner();
-    let owner = await daoContract.getOwner();
+    const daoState = await daoContract.getState();
+    const owner = daoState.owner;
+    const proposalOwner = daoState.proposalOwner;
+
     if (owner.toString() != sender.address.toString()) {        
         console.log("Only owner is allowed to create proposal");
         return false;
@@ -294,7 +301,7 @@ export async function daoSetProposalOwner(sender: Sender, client : TonClient, fe
         }
     );      
     
-    return await waitForConditionChange(daoContract.getProposalOwner, [], proposalOwner) && newProposalOwner;
+    return await waitForConditionChange(daoContract.getState, [], proposalOwner, 'proposalOwner') && newProposalOwner;
 }
 
 export async function setMetadata(sender: Sender, client : TonClient, fee: string, daoAddr: string, newMetadataAddr: string): Promise<string | boolean> {  
@@ -311,13 +318,14 @@ export async function setMetadata(sender: Sender, client : TonClient, fee: strin
         return false;
     }
 
-    let owner = await daoContract.getOwner();
+    const daoState = await daoContract.getState();
+    const owner = daoState.owner;
     if (owner.toString() != sender.address.toString()) {        
         console.log("Only owner is allowed to set new new metadata");
         return false;
     }
 
-    let metadtaAddr = await daoContract.getMetadata();
+    let metadtaAddr = (await daoContract.getState()).metadata;
 
     await daoContract.send(sender, { value: toNano(fee) }, 
         { 
@@ -325,7 +333,7 @@ export async function setMetadata(sender: Sender, client : TonClient, fee: strin
         }
     );      
     
-    return await waitForConditionChange(daoContract.getMetadata, [], metadtaAddr) && owner.toString();
+    return await waitForConditionChange(daoContract.getState, [], metadtaAddr, 'metadata') && owner.toString();
 }
 
 export async function proposalSendMessage(sender: Sender, client: TonClient, fee: string, proposalAddr: string, msgBody: string) {

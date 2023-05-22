@@ -121,14 +121,15 @@ export function max(num1: bigint, num2: bigint) {
   return num1 < num2 ? num2 : num1;
 }
 
-export async function waitForConditionChange<T>(func: (...args: any[]) => Promise<T>, args: any[], startVal: any, sleepIntervalMilli: number = 3000, maxNumIntervals: number = 5): Promise<boolean> {
+export async function waitForConditionChange<T>(func: (...args: any[]) => Promise<T>, args: any[], startVal: any, propertyNameInRes: undefined | string = undefined, sleepIntervalMilli: number = 3000, maxNumIntervals: number = 5): Promise<boolean> {
 
-  let res;
+  let res: any;
   let count = 0;
 
   do {            
     await sleep(sleepIntervalMilli);
     res = await func(...args);
+    if (propertyNameInRes) res = res[propertyNameInRes];
     count++;
 
   } while ((startVal  == res) && count < maxNumIntervals);

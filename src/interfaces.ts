@@ -16,6 +16,16 @@ export interface DaoRoles {
     proposalOwner: string;
 }
 
+export interface DaoState {
+
+    registry: string;
+    owner: string;
+    proposalOwner: string;
+    metadata: string;
+    daoIndex: Number;
+    fwdMsgFee: Number;
+}
+
 export interface MetadataArgs {
     about   : string;
     avatar  : string;
@@ -95,6 +105,7 @@ export interface ProposalMetadata {
     votingPowerStrategies: VotingPowerStrategy[];
     title: string;
     description: string;
+    quorum: string;
 }
 
 export interface Votes {

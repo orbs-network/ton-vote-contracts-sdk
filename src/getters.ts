@@ -5,7 +5,7 @@ import { Metadata } from '../contracts/output/ton-vote_Metadata';
 import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
 import { TonClient, TonClient4, Address } from "ton";
-import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType, ReleaseMode } from "./interfaces";
+import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType, ReleaseMode, DaoState } from "./interfaces";
 
 
 export async function getRegistry(client : TonClient, releaseMode: ReleaseMode): Promise<string> {  
@@ -88,52 +88,40 @@ async function getDaosAsc(client : TonClient, releaseMode: ReleaseMode, startId:
           
     return {endDaoId, daoAddresses: daoAddresses};
 }
-  
-export async function getDaoMetadata(client : TonClient, daoAddr: string): Promise<MetadataArgs> {  
+
+export async function getDaoState(client : TonClient, daoAddr: string): Promise<DaoState> {  
 
     let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
-    const metadataAddr = await daoContract.getMetadata();
+    const daoState = await daoContract.getState();
 
-    const metadataContract = client.open(Metadata.fromAddress(metadataAddr));
+    return {
+        registry: daoState.registry.toString(),
+        owner: daoState.owner.toString(),
+        proposalOwner: daoState.proposalOwner.toString(),
+        metadata: daoState.metadata.toString(),
+        daoIndex: Number(daoState.daoIndex),
+        fwdMsgFee: Number(daoState.fwdMsgFee)
+    }
+}
+
+export async function getDaoMetadata(client : TonClient, metadataAddr: string): Promise<MetadataArgs> {  
+
+    const metadataContract = client.open(Metadata.fromAddress(Address.parse(metadataAddr)));
     
-    const [about, avatar, github, hide, name, terms, website, telegram, jetton, nft] = await Promise.all([
-        metadataContract.getAbout(),
-        metadataContract.getAvatar(),
-        metadataContract.getGithub(),
-        metadataContract.getHide(),
-        metadataContract.getName(),
-        metadataContract.getTerms(),
-        metadataContract.getWebsite(),
-        metadataContract.getTelegram().catch(() => ''),
-        metadataContract.getJetton().then(j => j.toString()).catch(() => ''),
-        metadataContract.getNft().then(n => n.toString()).catch(() => ''),
-    ]);
-    
-    return {about, avatar, github, hide, name, terms, telegram, website, jetton, nft};
-}
+    const metadata = await metadataContract.getState();
 
-export async function getDaoRoles(client : TonClient, daoAddr: string): Promise<{owner: string, proposalOwner: string}> {  
-
-    let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
-
-    const [owner, proposalOwner] = await Promise.all([
-        daoContract.getOwner(),  
-        daoContract.getProposalOwner()
-    ].map(p => p.then(p => p.toString())));
-
-    return {owner, proposalOwner};
-}
-
-export async function getDaoIndex(client : TonClient, daoAddr: string): Promise<number> {  
-
-    let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
-    return Number(await daoContract.getDaoIndex());
-}
-
-export async function getDaoFwdMsgFee(client : TonClient, daoAddr: string): Promise<number> {  
-
-    let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
-    return Number(await daoContract.getFwdMsgFee());
+    return {
+        about: metadata.about, 
+        avatar: metadata.avatar, 
+        github: metadata.github, 
+        hide: metadata.hide, 
+        name: metadata.name, 
+        terms: metadata.terms, 
+        telegram: metadata.telegram, 
+        website: metadata.website, 
+        jetton: metadata.jetton.toString(), 
+        nft: metadata.nft.toString()
+    };
 }
 
 export async function getDaoProposals(client : TonClient, daoAddr: string, nextId: number | null = null, batchSize=100, order: 'desc' | 'asc' = 'asc'): Promise<{endProposalId: number, proposalAddresses: string[] | undefined}> {
@@ -272,39 +260,22 @@ export function extractVotingPowerStrategies(votingPowerStrategiesStr: string): 
 export async function getProposalMetadata(client : TonClient, client4: TonClient4, proposalAddr: string): Promise<ProposalMetadata> {
     let proposal = client.open(Proposal.fromAddress(Address.parse(proposalAddr)));
 
-    // const [id,  owner,  proposalStartTime,  proposalEndTime,  
-    //     proposalSnapshotTime,  proposalType,  votingPowerStrategy,  
-    //     title,  description,  jetton,  nft
-    // ] = await Promise.all([
-    //     proposal.getId().then((id) => Number(id)),
-    //     proposal.getOwner().then((owner) => String(owner)),
-    //     proposal.getProposalStartTime().then((start) => Number(start)),
-    //     proposal.getProposalEndTime().then((end) => Number(end)),
-    //     proposal.getProposalSnapshotTime().then((snapshot) => Number(snapshot)),
-    //     proposal.getProposalType().then((type) => Number(type)),
-    //     proposal.getVotingPowerStrategy().then((strategy) => Number(strategy)),
-    //     proposal.getTitle(),
-    //     proposal.getDescription(),
-    //     proposal.getJetton().then((jetton) => String(jetton)),
-    //     proposal.getNft().then((nft) => String(nft)),
-    // ]);
-      
-    // const mcSnapshotBlock = await getBlockFromTime(client4, proposalSnapshotTime);
-
-    const id = Number(await proposal.getId());
-    const proposalDeployer = (await proposal.getProposalDeployer()).toString();
-    const proposalStartTime = Number(await proposal.getProposalStartTime());
-    const proposalEndTime = Number(await proposal.getProposalEndTime());
-    const proposalSnapshotTime = Number(await proposal.getProposalSnapshotTime());
-    const votingSystem = extractVotingSystem(await proposal.getVotingSystem());
-    const votingPowerStrategies = extractVotingPowerStrategies(await proposal.getVotingPowerStrategies());
-    const mcSnapshotBlock = await getBlockFromTime(client4, Number(proposalSnapshotTime));
+    const state = await proposal.getState();
+    const id = Number(state.id);
+    const proposalDeployer = (state.proposalDeployer).toString();
+    const proposalStartTime = Number(state.proposalStartTime);
+    const proposalEndTime = Number(state.proposalEndTime);
+    const proposalSnapshotTime = Number(state.proposalSnapshotTime);
+    const quorum = state.quorum;
+    const votingSystem = extractVotingSystem(state.votingSystem);
+    const votingPowerStrategies = extractVotingPowerStrategies(state.votingPowerStrategies);
+    const mcSnapshotBlock = await getBlockFromTime(client4, proposalSnapshotTime);
     
-    const title = await proposal.getTitle();
-    const description = await proposal.getDescription();    
+    const title = state.title;
+    const description = state.description;
 
     return {id, proposalDeployer, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, 
-        votingSystem, votingPowerStrategies, title, description};
+        votingSystem, votingPowerStrategies, title, description, quorum};
 }
 
 async function getBlockFromTime(clientV4: TonClient4, utime: number): Promise<number> {
