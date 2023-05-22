@@ -34,14 +34,19 @@ export async function getDaos(client : TonClient, releaseMode: ReleaseMode, next
     return getDaosAsc(client, releaseMode, nextId, batchSize);
 }
 
-// TODO: FIXME
 async function getDaosDesc(client : TonClient, releaseMode: ReleaseMode, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
 
   let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
   let daoAddresses: string[] = [];
 
+  const nextDaoId = Number(await registryContract.getNextDaoId());
+
+  if (nextDaoId == 0) {
+    return {endDaoId: 0, daoAddresses: []}
+  }
+
   if (startId == null) {
-    startId = Number(await registryContract.getNextDaoId())-1;
+    startId = nextDaoId-1;
   }
 
   const endDaoId = Math.max(0, startId - batchSize + 1);
@@ -65,11 +70,17 @@ async function getDaosAsc(client : TonClient, releaseMode: ReleaseMode, startId:
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
     let daoAddresses: string[] = [];
   
+    const nextDaoId = Number(await registryContract.getNextDaoId());
+
+    if (nextDaoId == 0) {
+      return {endDaoId: 0, daoAddresses: []}
+    }
+  
     if (startId == null) {
       startId = 0;
     }
   
-    const endDaoId = Math.min(Number(await registryContract.getNextDaoId()), startId + batchSize);
+    const endDaoId = Math.min(nextDaoId, startId + batchSize);
 
     let batchCount = Math.ceil((endDaoId - startId) / batchSize);
     
