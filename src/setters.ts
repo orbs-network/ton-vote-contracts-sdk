@@ -235,10 +235,8 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
     );      
 
     let proposalContract = await Proposal.fromInit(proposalDeployerContract.address, nextProposalId);
-
-    await waitForContractToBeDeployed(client, proposalContract.address);
     
-    return await waitForConditionChange(proposalDeployerContract.getNextProposalId, [], nextProposalId) && proposalContract.address.toString();
+    return await waitForContractToBeDeployed(client, proposalContract.address) && proposalContract.address.toString();
 }
 
 export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: string, fee: string, newOwner: string): Promise<string | boolean> {  
