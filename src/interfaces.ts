@@ -45,6 +45,7 @@ export interface MetadataArgs {
     jetton: string;
     nft: string;
     website : string;
+    dns: string;
 }
 
 export enum VotingSystemType {

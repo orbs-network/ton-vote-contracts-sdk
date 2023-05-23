@@ -154,7 +154,7 @@ export async function newMetdata(sender: Sender, client : TonClient, fee: string
         metadataArgs.avatar, metadataArgs.name, metadataArgs.about, 
         metadataArgs.website, metadataArgs.terms, metadataArgs.telegram, 
         metadataArgs.github, Address.parse(metadataArgs.jetton), Address.parse(metadataArgs.nft),
-        metadataArgs.hide));        
+        metadataArgs.hide, metadataArgs.dns));        
     
     if (await client.isContractDeployed(metadataContract.address)) {
         console.log("Contract already deployed");

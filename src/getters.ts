@@ -139,7 +139,8 @@ export async function getDaoMetadata(client : TonClient, metadataAddr: string): 
         telegram: metadata.telegram, 
         website: metadata.website, 
         jetton: metadata.jetton.toString(), 
-        nft: metadata.nft.toString()
+        nft: metadata.nft.toString(),
+        dns: metadata.dns.toString()
     };
 }
 
@@ -322,7 +323,7 @@ export async function metdataExists(client : TonClient, metadataArgs: MetadataAr
         metadataArgs.avatar, metadataArgs.name, metadataArgs.about, 
         metadataArgs.website, metadataArgs.terms, metadataArgs.telegram, 
         metadataArgs.github, Address.parse(metadataArgs.jetton), Address.parse(metadataArgs.nft),
-        metadataArgs.hide));        
+        metadataArgs.hide, metadataArgs.dns));        
     
     if (await client.isContractDeployed(metadataContract.address)) {
         return true;
