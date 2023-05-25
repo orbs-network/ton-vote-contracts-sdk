@@ -50,7 +50,7 @@ export async function getTransactions(
     });  
 
     console.log(`Got ${txns.length}, lt ${paging.fromLt}`);
-    console.log(txns);
+    // console.log(txns);
     
     allTxns = [...allTxns, ...txns];
 

@@ -267,7 +267,7 @@ export function extractVotingPowerStrategies(votingPowerStrategiesStr: string): 
 
     } catch(err) {
         console.log('failed to extract voting power strategies from str: ', votingPowerStrategiesStr);
-        console.error(err);
+        // console.error(err);
         return [{
             type: VotingPowerStrategyType.UNDEFINED,
             arguments: []
