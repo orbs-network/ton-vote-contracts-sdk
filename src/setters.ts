@@ -235,7 +235,7 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
     );      
 
     await waitForContractToBeDeployed(client, proposalDeployerContract.address);
-    await waitForConditionChange(proposalDeployerContract.getNextProposalId, [], nextProposalId);
+    await waitForConditionChange(proposalDeployerContract.getNextProposalId, [], nextProposalId, 'nextProposalId');
     const proposalAddr = await proposalDeployerContract.getProposalAddr(nextProposalId);
     return proposalAddr.toString();
 }
