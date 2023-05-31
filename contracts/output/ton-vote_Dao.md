@@ -3,7 +3,7 @@ Contract: Dao
 BOC Size: 1722 bytes
 
 # Types
-Total Types: 27
+Total Types: 28
 
 ## StateInit
 TLB: `_ code:^cell data:^cell = StateInit`
@@ -104,6 +104,10 @@ Signature: `Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnaps
 ## ProposalInit
 TLB: `proposal_init#cd517809 body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string,quorum:^string} = ProposalInit`
 Signature: `ProposalInit{body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string,quorum:^string}}`
+
+## Vote
+TLB: `vote#7c420ea2 comment:^string = Vote`
+Signature: `Vote{comment:^string}`
 
 ## ProposalContractState
 TLB: `_ proposalDeployer:address id:uint32 proposalStartTime:uint64 proposalEndTime:uint64 proposalSnapshotTime:uint64 votingSystem:^string votingPowerStrategies:^string title:^string description:^string quorum:^string = ProposalContractState`

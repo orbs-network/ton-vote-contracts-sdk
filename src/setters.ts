@@ -349,13 +349,11 @@ export async function proposalSendMessage(sender: Sender, client: TonClient, fee
     
     const seqno = await getSeqno(client, sender.address.toString());
 
-    await sender.send(
-        {
-            value: toNano(fee), to: Address.parse(proposalAddr), 
-            body: beginCell().store(storeComment(msgBody)).endCell(),
-            sendMode: SendMode.CARRY_ALL_REMAINING_INCOMING_VALUE, 
+    await proposalContract.send(sender, { value: toNano(fee) }, 
+        { 
+            $$type: 'Vote', comment: msgBody
         }
-    );
+    );      
 
     await waitForConditionChange(getSeqno, [client, sender.address.toString()], seqno);
 }
