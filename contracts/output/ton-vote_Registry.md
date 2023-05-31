@@ -3,7 +3,7 @@ Contract: Registry
 BOC Size: 1657 bytes
 
 # Types
-Total Types: 28
+Total Types: 25
 
 ## StateInit
 TLB: `_ code:^cell data:^cell = StateInit`
@@ -89,14 +89,6 @@ Signature: `DaoInit{owner:address,proposalOwner:address,metadata:address}`
 TLB: `_ registry:address owner:address proposalOwner:address metadata:address daoIndex:uint32 fwdMsgFee:uint64 = DaoContractState`
 Signature: `DaoContractState{registry:address,owner:address,proposalOwner:address,metadata:address,daoIndex:uint32,fwdMsgFee:uint64}`
 
-## DeployAndInitProposal
-TLB: `deploy_and_init_proposal#9be57ef7 body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string,quorum:^string} = DeployAndInitProposal`
-Signature: `DeployAndInitProposal{body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string,quorum:^string}}`
-
-## SendProposalInit
-TLB: `send_proposal_init#da72c6df body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string,quorum:^string} = SendProposalInit`
-Signature: `SendProposalInit{body:Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string,quorum:^string}}`
-
 ## Params
 TLB: `_ proposalStartTime:uint64 proposalEndTime:uint64 proposalSnapshotTime:uint64 votingSystem:^string votingPowerStrategies:^string title:^string description:^string quorum:^string = Params`
 Signature: `Params{proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string,quorum:^string}`
@@ -112,10 +104,6 @@ Signature: `Vote{comment:^string}`
 ## ProposalContractState
 TLB: `_ proposalDeployer:address id:uint32 proposalStartTime:uint64 proposalEndTime:uint64 proposalSnapshotTime:uint64 votingSystem:^string votingPowerStrategies:^string title:^string description:^string quorum:^string = ProposalContractState`
 Signature: `ProposalContractState{proposalDeployer:address,id:uint32,proposalStartTime:uint64,proposalEndTime:uint64,proposalSnapshotTime:uint64,votingSystem:^string,votingPowerStrategies:^string,title:^string,description:^string,quorum:^string}`
-
-## MetadataState
-TLB: `_ avatar:^string name:^string about:^string website:^string terms:^string telegram:^string github:^string jetton:address nft:address hide:bool dns:^string = MetadataState`
-Signature: `MetadataState{avatar:^string,name:^string,about:^string,website:^string,terms:^string,telegram:^string,github:^string,jetton:address,nft:address,hide:bool,dns:^string}`
 
 # Get Methods
 Total Get Methods: 3

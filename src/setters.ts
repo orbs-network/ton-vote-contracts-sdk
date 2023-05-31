@@ -1,5 +1,6 @@
 import { waitForConditionChange, waitForContractToBeDeployed, getSeqno, storeComment } from "./helpers";
-import { Registry, storeDeployAndInitProposal } from '../contracts/output/ton-vote_Registry'; 
+import { Registry } from '../contracts/output/ton-vote_Registry'; 
+import { storeDeployAndInitProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
 import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'; 
