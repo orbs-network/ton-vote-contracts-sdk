@@ -12,7 +12,7 @@ import {addressStringToTupleItem, cellToAddress, intToTupleItem } from "./helper
 
 // const PROPOSAL_ABI = fs.readFileSync('./dist/contracts/output/ton-vote_Proposal.abi', 'utf-8');
 
-const PROPOSAL_VOTE_OP = 880812829;
+const PROPOSAL_VOTE_OP = 2084703906;
 
 export async function getClientV2(customEndpoint?: string, apiKey?: string): Promise<TonClient> {
 
