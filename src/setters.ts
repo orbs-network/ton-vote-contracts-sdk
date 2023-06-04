@@ -1,6 +1,6 @@
 import { waitForConditionChange, waitForContractToBeDeployed, getSeqno, storeComment } from "./helpers";
 import { Registry } from '../contracts/output/ton-vote_Registry'; 
-import { storeDeployAndInitProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
+import { storeDeployAndInitProposal, storeFwdUpdateProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
 import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'; 
@@ -239,6 +239,63 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
     await waitForConditionChange(proposalDeployerContract.getNextProposalId, [], nextProposalId, 'nextProposalId');
     const proposalAddr = await proposalDeployerContract.getProposalAddr(nextProposalId);
     return proposalAddr.toString();
+}
+
+export async function updateProposal(sender: Sender, client : TonClient, fee: string, daoAddr: string, proposalAddr: string, title: string, description: string): Promise<boolean> {  
+
+    if (!sender.address) {
+        console.log(`sender address is not defined`);        
+        return false;
+    };
+    
+    let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
+
+    if (!(await client.isContractDeployed(daoContract.address))) {        
+        console.log("Dao contract is not deployed");
+        return false;
+    }
+
+    const daoState = await daoContract.getState();
+    const owner = daoState.owner;
+    const proposalOwner = daoState.proposalOwner;
+
+    if ((proposalOwner.toString() != sender.address.toString()) && (owner.toString() != sender.address.toString())) {        
+        console.log("Only proposalOwner or owner are allowed to update proposal");
+        return false;
+    }
+
+    let proposalDeployerContract = client.open(await ProposalDeployer.fromInit(Address.parse(daoAddr)));
+    if (!proposalDeployerContract.init) {
+        console.log('proposalDeployer init is undefined');
+        return false;
+    }
+
+    if (!(await client.isContractDeployed(proposalDeployerContract.address))) {
+        console.log('Proposal deployer not deployed');        
+        return false;
+    }
+
+    await daoContract.send(sender, { value: toNano(fee) }, 
+        { 
+            $$type: 'FwdMsg', fwdMsg: {
+                $$type: 'SendParameters', 
+                bounce: true,
+                to: proposalDeployerContract.address,
+                value: toNano(0),
+                mode: BigInt(64),
+                body: beginCell().store(storeFwdUpdateProposal({
+                    $$type: 'FwdUpdateProposal',
+                    proposalAddress: Address.parse(proposalAddr),
+                    title: title,
+                    description: description
+                })).endCell(),
+                code: null,
+                data: null
+            }
+        }
+    );
+    
+    return true;
 }
 
 export async function daoSetOwner(sender: Sender, client : TonClient, daoAddr: string, fee: string, newOwner: string): Promise<string | boolean> {  
