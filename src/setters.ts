@@ -88,6 +88,28 @@ export async function setDeployAndInitDaoFee(sender: Sender, client : TonClient,
     return await waitForConditionChange(registryContract.getState, [], deployAndInitDaoFee, 'deployAndInitDaoFee');
 }
 
+export async function setNewDaoFwdMsgFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, newDaosFwdMsgFee: string): Promise<string | boolean> {  
+
+    if (!sender.address) {
+        console.log(`sender address is not defined`);        
+        return false;
+    };
+    
+    let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
+
+    const daosfwdMsgFee = (await registryContract.getState()).newDaosfwdMsgFee;
+
+    if (daosfwdMsgFee == toNano(newDaosFwdMsgFee)) return true;
+
+    await registryContract.send(sender, { value: toNano(fee) }, 
+    { 
+        $$type: 'SetNewDaoFwdMsgFee', 
+        newDaosfwdMsgFee: toNano(newDaosFwdMsgFee)
+    });
+
+    return await waitForConditionChange(registryContract.getState, [], daosfwdMsgFee, 'newDaosfwdMsgFee');
+}
+
 export async function setRegistryAdmin(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, newRegistryAdmin: string): Promise<string | boolean> {  
 
     if (!sender.address) {
