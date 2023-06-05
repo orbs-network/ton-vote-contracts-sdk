@@ -7,7 +7,7 @@
 
 ---
 
-[TON.Vote](https://github.com/orbs-network/ton-vote) is a completely decentralized, on-chain DAO governance platform designed exclusively for the TON ecosystem.
+[TON.Vote](https://github.com/orbs-network/ton-vote) is a completely decentralized, on-chain DAO governance platform designed exclusively for the TON ecosystem. The system architecture is heavily inspired from [snapshot.org](https://snapshot.org), the de-facto standard in the EVM ecosystem for DAO governance which is used by Uniswap, Sushi, Aave, Arbitrum, etc.
 
 This is an SDK for the Ton.vote [contracts](https://github.com/orbs-network/ton-vote-contracts). Anyone can use this SDK to interact with TON.vote contracts using typescript to create, update or fetch data from the chain.
 
