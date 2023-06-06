@@ -1,6 +1,6 @@
 import { waitForConditionChange, waitForContractToBeDeployed, getSeqno, storeComment } from "./helpers";
 import { Registry } from '../contracts/output/ton-vote_Registry'; 
-import { storeDeployAndInitProposal, storeFwdUpdateProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
+import { storeDeployAndInitProposal, storeSendUpdateProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
 import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'; 
@@ -263,7 +263,7 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
     return proposalAddr.toString();
 }
 
-export async function updateProposal(sender: Sender, client : TonClient, fee: string, daoAddr: string, proposalAddr: string, title: string, description: string): Promise<boolean> {  
+export async function updateProposal(sender: Sender, client : TonClient, fee: string, daoAddr: string, proposalAddr: string, updateParams: ProposalMetadata): Promise<boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -305,11 +305,21 @@ export async function updateProposal(sender: Sender, client : TonClient, fee: st
                 to: proposalDeployerContract.address,
                 value: toNano(0),
                 mode: BigInt(64),
-                body: beginCell().store(storeFwdUpdateProposal({
-                    $$type: 'FwdUpdateProposal',
+                body: beginCell().store(storeSendUpdateProposal({
+                    $$type: 'SendUpdateProposal',
                     proposalAddress: Address.parse(proposalAddr),
-                    title: title,
-                    description: description
+                    updateParams: {
+                        $$type: 'Params',
+                        proposalStartTime: BigInt(updateParams.proposalStartTime),
+                        proposalEndTime: BigInt(updateParams.proposalEndTime),
+                        proposalSnapshotTime: BigInt(updateParams.proposalSnapshotTime),
+                        votingSystem: JSON.stringify(updateParams.votingSystem),
+                        votingPowerStrategies: JSON.stringify(updateParams.votingPowerStrategies),
+                        title: updateParams.title,
+                        description: updateParams.description,
+                        quorum: updateParams.quorum
+                    },
+                    hide: updateParams.hide
                 })).endCell(),
                 code: null,
                 data: null

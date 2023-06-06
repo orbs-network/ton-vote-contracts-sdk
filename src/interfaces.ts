@@ -115,6 +115,7 @@ export interface ProposalMetadata {
     title: string;
     description: string;
     quorum: string;
+    hide: boolean;
 }
 
 export interface Votes {
