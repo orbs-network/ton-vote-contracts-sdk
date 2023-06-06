@@ -248,7 +248,8 @@ export async function newProposal(sender: Sender, client : TonClient, fee: strin
                         votingPowerStrategies: JSON.stringify(proposalMetadata.votingPowerStrategies),
                         title: proposalMetadata.title,
                         description: proposalMetadata.description,
-                        quorum: proposalMetadata.quorum
+                        quorum: proposalMetadata.quorum,
+                        hide: proposalMetadata.hide
                     }
                 })).endCell(),
                 code: code,
@@ -317,9 +318,9 @@ export async function updateProposal(sender: Sender, client : TonClient, fee: st
                         votingPowerStrategies: JSON.stringify(updateParams.votingPowerStrategies),
                         title: updateParams.title,
                         description: updateParams.description,
-                        quorum: updateParams.quorum
-                    },
-                    hide: updateParams.hide
+                        quorum: updateParams.quorum,
+                        hide: updateParams.hide
+                    }
                 })).endCell(),
                 code: null,
                 data: null
