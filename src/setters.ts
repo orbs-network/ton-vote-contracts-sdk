@@ -1,5 +1,6 @@
 import { waitForConditionChange, waitForContractToBeDeployed, getSeqno, storeComment } from "./helpers";
 import { Registry } from '../contracts/output/ton-vote_Registry'; 
+import { Router } from '../contracts/output/ton-vote_Router'; 
 import { storeDeployAndInitProposal, storeSendUpdateProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
@@ -8,10 +9,38 @@ import { Proposal } from '../contracts/output/ton-vote_Proposal';
 import { SendMode, TonClient } from "ton";
 import { Address, Sender, toNano, beginCell, Cell } from "ton-core";
 import { MetadataArgs, ProposalMetadata, ReleaseMode } from "./interfaces";
+import { getRegistry } from "./getters";
 
 
 const ZERO_ADDR = 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c';
 
+export async function getRouter(sender: Sender, client : TonClient, fee: string): Promise<string> {  
+    let routerContract = client.open(await Router.fromInit());
+    return routerContract.address.toString();
+}
+
+export async function newRouter(sender: Sender, client : TonClient, fee: string): Promise<boolean | string> {  
+
+    if (!sender.address) {
+        console.log(`sender address is not defined`);        
+        return false;
+    };
+    
+    let routerContract = client.open(await Router.fromInit());
+
+    await routerContract.send(sender, { value: toNano(fee) }, 
+    { 
+        $$type: 'Deploy', 
+        queryId: 0n
+    });
+    
+    if (!await waitForContractToBeDeployed(client, routerContract.address)) {
+        console.error('failed to deploy router contract');
+        return false;        
+    }
+
+    return routerContract.address.toString();
+}
 
 export async function newRegistry(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, admin: string): Promise<boolean> {  
 
@@ -42,6 +71,38 @@ export async function newRegistry(sender: Sender, client : TonClient, releaseMod
     return await waitForConditionChange(registryContract.getState, [], ZERO_ADDR, 'admin');
 }
 
+export async function createNewDaoOnProdAndDev(sender: Sender, client : TonClient, fee: string, metadataAddr: string, ownerAddr: string, proposalOwner: string, prodMsgValue: string, devMsgValue: string): Promise<string | boolean> {  
+
+    if (!sender.address) {
+        console.log(`sender address is not defined`);        
+        return false;
+    };
+    
+    const routerContract = client.open(await Router.fromInit());
+    const prodRegistry = await getRegistry(client, ReleaseMode.PRODUCTION);
+    const devRegistry = await getRegistry(client, ReleaseMode.DEVELOPMENT);
+
+    if (!prodRegistry || !devRegistry) return false;
+    let prodRegistryContract = client.open(await Registry.fromInit(BigInt(ReleaseMode.PRODUCTION)));
+
+    const nextDaoId = await prodRegistryContract.getNextDaoId();
+    let daoContract = client.open(await Dao.fromInit(prodRegistryContract.address, nextDaoId));
+
+    await routerContract.send(sender, { value: toNano(fee) }, 
+    { 
+        $$type: 'RouteDeployAndInitDao',
+        prodMsgValue: toNano(prodMsgValue),
+        devMsgValue: toNano(devMsgValue), 
+        prodRegistry: Address.parse(prodRegistry!),
+        devRegistry: Address.parse(devRegistry!),
+        owner: Address.parse(ownerAddr), 
+        proposalOwner: Address.parse(proposalOwner), 
+        metadata: Address.parse(metadataAddr)
+    });
+
+    return await waitForConditionChange(prodRegistryContract.getNextDaoId, [], nextDaoId) && daoContract.address.toString();       
+}
+
 export async function newDao(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, metadataAddr: string, ownerAddr: string, proposalOwner: string): Promise<string | boolean> {  
 
     if (!sender.address) {
@@ -62,8 +123,7 @@ export async function newDao(sender: Sender, client : TonClient, releaseMode: Re
         metadata: Address.parse(metadataAddr)
     });
 
-    return await waitForConditionChange(registryContract.getNextDaoId, [], nextDaoId) && daoContract.address.toString();
-    
+    return await waitForConditionChange(registryContract.getNextDaoId, [], nextDaoId) && daoContract.address.toString();   
 }
 
 export async function setDeployAndInitDaoFee(sender: Sender, client : TonClient, releaseMode: ReleaseMode, fee: string, newDeployAndInitDaoFee: string): Promise<string | boolean> {  
