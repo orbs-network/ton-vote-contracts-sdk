@@ -1,6 +1,6 @@
 # TACT Compilation Report
-Contract: Registry
-BOC Size: 1720 bytes
+Contract: Router
+BOC Size: 1069 bytes
 
 # Types
 Total Types: 23
@@ -98,14 +98,7 @@ TLB: `_ registry:address owner:address proposalOwner:address metadata:address da
 Signature: `DaoContractState{registry:address,owner:address,proposalOwner:address,metadata:address,daoIndex:uint32,fwdMsgFee:uint64}`
 
 # Get Methods
-Total Get Methods: 3
-
-## state
-
-## nextDaoId
-
-## daoAddress
-Argument: daoId
+Total Get Methods: 0
 
 # Error Codes
 2: Stack undeflow
