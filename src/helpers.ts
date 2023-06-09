@@ -1,14 +1,27 @@
-import {
-  Address,
-  Builder,
-  Cell,
-  OpenedContract
-} from "ton";
 import { mnemonicNew, mnemonicToWalletKey } from "ton-crypto";
-import { TonClient, WalletContractV3R2, fromNano, beginCell, TupleItem , TupleBuilder, TupleItemInt } from "ton";
+import { TonClient, WalletContractV3R2, fromNano, beginCell, TupleItem , TupleBuilder, TonClient4, 
+  Address, Builder, Cell, OpenedContract } from "ton";
 import fs from "fs";
-import {execSync} from "child_process";
+import { getHttpEndpoint } from "@orbs-network/ton-access";
+import { Transaction } from 'ton-core';
+import _ from "lodash";
 
+const PROPOSAL_VOTE_OP = 2084703906;
+
+
+export async function getClientV2(customEndpoint?: string, apiKey?: string): Promise<TonClient> {
+
+  if (customEndpoint) {
+    return new TonClient({ endpoint: customEndpoint, apiKey });
+  }
+  const endpoint = await getHttpEndpoint();
+  return new TonClient({ endpoint });
+}
+
+export async function getClientV4(customEndpoint?: string): Promise<TonClient4> {
+  const endpoint = customEndpoint || "https://mainnet-v4.tonhubapi.com";
+  return new TonClient4({ endpoint });
+}
 
 export async function waitForContractToBeDeployed(client: TonClient, deployedContract: Address) {
   const seqnoStepInterval = 2500;
@@ -24,17 +37,6 @@ export async function waitForContractToBeDeployed(client: TonClient, deployedCon
   console.log(`⌛️ waited for contract deployment ${((attempt + 1) * seqnoStepInterval) / 1000}s`);
   return retval;
 }
-
-// export async function waitForSeqno(walletContract: OpenedContract<T>, seqno: number) {
-//   const seqnoStepInterval = 3000;
-//   console.log(`⏳ waiting for seqno to update (${seqno})`);
-//   for (var attempt = 0; attempt < 10; attempt++) {
-//     await sleep(seqnoStepInterval);
-//     const seqnoAfter = await walletContract.getSeqno();
-//     if (seqnoAfter > seqno) break;
-//   }
-//   console.log(`⌛️ seqno update after ${((attempt + 1) * seqnoStepInterval) / 1000}s`);
-// }
 
 export function sleep(time: number) {
   return new Promise((resolve) => {
@@ -89,28 +91,6 @@ export async function initDeployKey(index = '') {
 		deployerMnemonic = deployConfigJsonContent.deployerMnemonic;
 	}
 	return mnemonicToWalletKey(deployerMnemonic.split(" "), index);
-}
-
-export function compileFuncToB64(funcFiles: string[]): string {
-    const funcPath = process.env.FUNC_PATH || "/usr/local/bin/func";
-    try {
-        execSync(`${funcPath} -o build/tmp.fif  -SPA ${funcFiles.join(" ")}`);
-    } catch (e: any) {
-        if (e.message.indexOf("error: `#include` is not a type identifier") > -1) {
-            console.log(`
-============================================================================================================
-Please update your func compiler to support the latest func features
-to set custom path to your func compiler please set  the env variable "export FUNC_PATH=/usr/local/bin/func"
-============================================================================================================
-`);
-            process.exit(1);
-        } else {
-            console.log(e.message);
-        }
-    }
-
-    const stdOut = execSync(`/usr/local/bin/fift -s build/_print-hex.fif`).toString();
-    return stdOut.trim();
 }
 
 export function min(num1: bigint, num2: bigint) {
@@ -177,4 +157,53 @@ export function storeComment(msg: string) {
       b_0.storeUint(0, 32);
       b_0.storeStringTail(msg);
   };
+}
+
+export function bigintToBase64(bn: BigInt) {
+  var hex = bn.toString(16);
+  if (hex.length % 2) { hex = '0' + hex; }
+
+  var bin = [];
+  var i = 0;
+  var d;
+  var b;
+  while (i < hex.length) {
+    d = parseInt(hex.slice(i, i + 2), 16);
+    b = String.fromCharCode(d);
+    bin.push(b);
+    i += 2;
+  }
+
+  return btoa(bin.join(''));
+}
+
+export function filterTxByTimestamp(transactions: Transaction[], lastLt: string) {
+  const filteredTx = _.filter(transactions, function (transaction: Transaction) {
+    return Number(transaction.lt) <= Number(lastLt);
+  });
+
+  return filteredTx;
+}
+
+export function extractComment(body: Cell | undefined): string | null {
+
+  if (!body) return null;
+
+  const vote = body?.beginParse();
+  const op = parseInt(vote.loadBits(32).toString(), 16);
+
+  if (op == 0) {
+    const comment = vote.loadBits(vote.remainingBits).toString();
+    return Buffer.from(comment, 'hex').toString('utf-8');
+
+  }
+
+  if (op == PROPOSAL_VOTE_OP) {
+      const refVote = vote.loadRef().beginParse();
+      const comment = refVote.loadBits(refVote.remainingBits).toString();
+      return Buffer.from(comment, 'hex').toString('utf-8');
+  }
+
+  return null;
+
 }
