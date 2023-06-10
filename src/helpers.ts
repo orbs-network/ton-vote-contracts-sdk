@@ -188,22 +188,28 @@ export function filterTxByTimestamp(transactions: Transaction[], lastLt: string)
 export function extractComment(body: Cell | undefined): string | null {
 
   if (!body) return null;
+  if (body.bits.length < 32) return null;
 
-  const vote = body?.beginParse();
-  const op = parseInt(vote.loadBits(32).toString(), 16);
+  try {
 
-  if (op == 0) {
-    const comment = vote.loadBits(vote.remainingBits).toString();
-    return Buffer.from(comment, 'hex').toString('utf-8');
+    const vote = body?.beginParse();
+    const op = parseInt(vote.loadBits(32).toString(), 16);
 
-  }
-
-  if (op == PROPOSAL_VOTE_OP) {
-      const refVote = vote.loadRef().beginParse();
-      const comment = refVote.loadBits(refVote.remainingBits).toString();
+    if (op == 0) {
+      const comment = vote.loadBits(vote.remainingBits).toString();
       return Buffer.from(comment, 'hex').toString('utf-8');
+
+    }
+
+    if (op == PROPOSAL_VOTE_OP) {
+        const refVote = vote.loadRef().beginParse();
+        const comment = refVote.loadBits(refVote.remainingBits).toString();
+        return Buffer.from(comment, 'hex').toString('utf-8');
+    }
+
+  } catch (err) {
+      console.error(`failed to extract comment: ${err}`);      
   }
 
   return null;
-
 }
