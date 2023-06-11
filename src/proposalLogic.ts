@@ -81,22 +81,28 @@ function extractComment(body: Cell | undefined): string | null {
 
   if (!body) return null;
 
-  const vote = body?.beginParse();
-  const op = parseInt(vote.loadBits(32).toString(), 16);
+  try {
+    const vote = body?.beginParse();
+    const op = parseInt(vote.loadBits(32).toString(), 16);
 
-  if (op == 0) {
-    const comment = vote.loadBits(vote.remainingBits).toString();
-    return Buffer.from(comment, 'hex').toString('utf-8');
-
-  }
-
-  if (op == PROPOSAL_VOTE_OP) {
-      const refVote = vote.loadRef().beginParse();
-      const comment = refVote.loadBits(refVote.remainingBits).toString();
+    if (op == 0) {
+      const comment = vote.loadBits(vote.remainingBits).toString();
       return Buffer.from(comment, 'hex').toString('utf-8');
-  }
 
-  return null;
+    }
+
+    if (op == PROPOSAL_VOTE_OP) {
+        const refVote = vote.loadRef().beginParse();
+        const comment = refVote.loadBits(refVote.remainingBits).toString();
+        return Buffer.from(comment, 'hex').toString('utf-8');
+    }
+
+    return null;
+  } 
+  catch (err) {
+    console.log(`unexpected error while extracting comment: ${err}`);
+    return null;    
+  }
 
 }
 
