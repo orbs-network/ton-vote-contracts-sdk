@@ -62,7 +62,10 @@ export enum VotingPowerStrategyType {
     UNDEFINED = -1,
     TonBalance = 0, 
     JettonBalance = 1, 
-    NftCcollection = 2
+    NftCcollection = 2,
+    TonBalance_1Wallet1Vote = 3, 
+    JettonBalance_1Wallet1Vote = 4, 
+    NftCcollection_1Wallet1Vote = 5, 
 };
 
 /*

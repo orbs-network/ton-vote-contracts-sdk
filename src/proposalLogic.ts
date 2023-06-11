@@ -225,6 +225,10 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
     ).account.balance.coins;
   }
 
+  else if (strategy == VotingPowerStrategyType.TonBalance_1Wallet1Vote) {
+    return '1';
+  }
+
   else if (strategy == VotingPowerStrategyType.JettonBalance) {
 
     const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.JettonBalance, 'jetton-address');
@@ -254,9 +258,17 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
 
   }
 
+  else if (strategy == VotingPowerStrategyType.JettonBalance_1Wallet1Vote) {
+    return '1';
+  }
+
   else if (strategy == VotingPowerStrategyType.NftCcollection) {
     
     return (toNano(allNftItemsHolders[voter] || 0)).toString()
+  }
+
+  else if (strategy == VotingPowerStrategyType.NftCcollection_1Wallet1Vote) {
+    return '1';
   }
 
   return '0';
@@ -281,10 +293,28 @@ export async function getVotingPower(
 
   console.log(`strategy: ${strategy}, nftItemsHolders: ${nftItemsHolders}`);
   
-  for (const voter of newVoters) {
-    votingPower[voter] = await getSingleVoterPower(clientV4, voter, proposalMetadata, strategy, nftItemsHolders);
-  }
+  const batchSize = 20;
 
+  const totalBatches = Math.ceil(newVoters.length / batchSize);
+  
+  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+    const startIndex = batchIndex * batchSize;
+    const endIndex = startIndex + batchSize;
+    const batchVoters = newVoters.slice(startIndex, endIndex);
+  
+    const voterPromises = batchVoters.map((voter) =>
+      getSingleVoterPower(clientV4, voter, proposalMetadata, strategy, nftItemsHolders)
+    );
+  
+    const votingPowerArray = await Promise.all(voterPromises);
+  
+    for (let i = 0; i < batchVoters.length; i++) {
+      const voter = batchVoters[i];
+      const votingPowerValue = votingPowerArray[i];
+      votingPower[voter] = votingPowerValue;
+    }
+  }
+  
   return votingPower;
 }
 
