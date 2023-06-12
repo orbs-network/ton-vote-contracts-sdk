@@ -271,6 +271,7 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
     try {
 
       const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, 'jetton-address');
+      if (!jettonAddress) return '0';
       let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(jettonAddress!), 'get_wallet_address', addressStringToTupleItem(voter));
       
       if (res.result[0].type != 'slice') {
@@ -285,7 +286,7 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
           return '0';
       }
           
-      return String(res.result[0].value > 0);
+      return String(Number(res.result[0].value > 0));
 
     } catch {
 
