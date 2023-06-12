@@ -147,19 +147,22 @@ export function getAllVotes(transactions: Transaction[], proposalMetadata: Propo
   return allVotes;
 }
 
-function extractValueFromStrategy(votingPowerStrategies: VotingPowerStrategy[], strategyTypeFilter: VotingPowerStrategyType, nameFilter: string): string | undefined {
+function extractValueFromStrategy(votingPowerStrategies: VotingPowerStrategy[], nameFilter: string): string | undefined {
 
-  const votingPowerStrategy = votingPowerStrategies.find((arg) => arg.type == strategyTypeFilter);
-  if (!votingPowerStrategy) return;
+  const strategy = votingPowerStrategies.find((strategy) => strategy.arguments.some((arg) => arg.name === nameFilter));
 
-  const nftArg = votingPowerStrategy.arguments.find((arg) => arg.name === nameFilter);
-  return nftArg ? nftArg.value : undefined;
+  if (!strategy) return;
+
+  return strategy.arguments.find((arg) => arg.name === nameFilter)?.value;
 } 
 
 export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<{ [key: string]: number } > {
 
   let allNftItemsHolders: { [key: string]: number } = {};
-  const nftAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.NftCcollection, 'nft-address');
+  let nftAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, 'nft-address');
+
+  if (!nftAddress) return allNftItemsHolders;
+
   let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(nftAddress!), 'get_collection_data');
 
   if (!res.result.length) {
@@ -236,7 +239,10 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
 
     try {
 
-      const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.JettonBalance, 'jetton-address');
+      const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, 'jetton-address');
+
+      if (!jettonAddress) return '0';
+
       let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(jettonAddress!), 'get_wallet_address', addressStringToTupleItem(voter));
       
       if (res.result[0].type != 'slice') {
@@ -264,7 +270,7 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
     
     try {
 
-      const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.JettonBalance, 'jetton-address');
+      const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, 'jetton-address');
       let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(jettonAddress!), 'get_wallet_address', addressStringToTupleItem(voter));
       
       if (res.result[0].type != 'slice') {
