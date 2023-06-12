@@ -293,7 +293,8 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
   }
 
   else if (strategy == VotingPowerStrategyType.NftCcollection_1Wallet1Vote) {
-    return String(toNano(allNftItemsHolders[voter]) > 0);
+    if (voter in allNftItemsHolders) return '1';
+    return '0';
   }
 
   return '0';
