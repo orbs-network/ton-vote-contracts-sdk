@@ -38,7 +38,7 @@ export async function getTransactions(
   let startPage = { fromLt: "0", hash: "" };
   let allTxns: Transaction[] = [];
   let paging = startPage;
-  const limit = 10;
+  const limit = 500;
 
   while (true) {
     console.log("Querying...");
