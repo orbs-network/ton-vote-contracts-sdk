@@ -82,7 +82,10 @@ function extractComment(body: Cell | undefined): string | null {
   if (!body) return null;
 
   try {
-    const vote = body?.beginParse();
+
+    const vote = body.beginParse();
+    if (vote.remainingBits < 32) return null;
+
     const op = parseInt(vote.loadBits(32).toString(), 16);
 
     if (op == 0) {
@@ -231,10 +234,9 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
 
   else if (strategy == VotingPowerStrategyType.JettonBalance) {
 
-    const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.JettonBalance, 'jetton-address');
-
     try {
 
+      const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.JettonBalance, 'jetton-address');
       let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(jettonAddress!), 'get_wallet_address', addressStringToTupleItem(voter));
       
       if (res.result[0].type != 'slice') {
@@ -253,22 +255,45 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
 
     } catch {
 
-      return '0'
+      return '0';
     }
 
   }
 
   else if (strategy == VotingPowerStrategyType.JettonBalance_1Wallet1Vote) {
-    return '1';
+    
+    try {
+
+      const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, VotingPowerStrategyType.JettonBalance, 'jetton-address');
+      let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(jettonAddress!), 'get_wallet_address', addressStringToTupleItem(voter));
+      
+      if (res.result[0].type != 'slice') {
+          return '0';
+      }
+      
+      const jettonWalletAddress = cellToAddress(res.result[0].cell);
+
+      res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, jettonWalletAddress, 'get_wallet_data');
+          
+      if (res.result[0].type != 'int') {
+          return '0';
+      }
+          
+      return String(res.result[0].value > 0);
+
+    } catch {
+
+      return '0';
+    }
+
   }
 
-  else if (strategy == VotingPowerStrategyType.NftCcollection) {
-    
-    return (toNano(allNftItemsHolders[voter] || 0)).toString()
+  else if (strategy == VotingPowerStrategyType.NftCcollection) {    
+    return (toNano(allNftItemsHolders[voter] || 0)).toString();
   }
 
   else if (strategy == VotingPowerStrategyType.NftCcollection_1Wallet1Vote) {
-    return '1';
+    return String(toNano(allNftItemsHolders[voter]) > 0);
   }
 
   return '0';
