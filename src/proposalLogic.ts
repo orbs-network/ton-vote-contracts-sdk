@@ -201,6 +201,11 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
               
         res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
     
+        if (!res || !res.result || !res.result[3]) {
+          console.log(`could not extract result from nft ${nftItemAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
+          return;
+        }
+
         if (res.result[3].type != 'slice') {
           console.log(`unexpected result type from runMethod on get_nft_data on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
           return;
