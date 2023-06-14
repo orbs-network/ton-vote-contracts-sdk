@@ -6,7 +6,13 @@ import { ProposalDeployer } from '../contracts/output/ton-vote_ProposalDeployer'
 import { Proposal } from '../contracts/output/ton-vote_Proposal'; 
 import { TonClient, TonClient4, Address } from "ton";
 import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType, ReleaseMode, DaoState, RegistryState } from "./interfaces";
+import { Router } from "../contracts/output/ton-vote_Router";
 
+
+export async function getRouter(client : TonClient, fee: string): Promise<string> {  
+    let routerContract = client.open(await Router.fromInit());
+    return routerContract.address.toString();
+}
 
 export async function getRegistry(client : TonClient, releaseMode: ReleaseMode): Promise<string | undefined> {  
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));

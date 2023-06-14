@@ -14,10 +14,6 @@ import { getRegistry } from "./getters";
 
 const ZERO_ADDR = 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c';
 
-export async function getRouter(sender: Sender, client : TonClient, fee: string): Promise<string> {  
-    let routerContract = client.open(await Router.fromInit());
-    return routerContract.address.toString();
-}
 
 export async function newRouter(sender: Sender, client : TonClient, fee: string): Promise<boolean | string> {  
 
@@ -71,7 +67,8 @@ export async function newRegistry(sender: Sender, client : TonClient, releaseMod
     return await waitForConditionChange(registryContract.getState, [], ZERO_ADDR, 'admin');
 }
 
-export async function createNewDaoOnProdAndDev(sender: Sender, client : TonClient, fee: string, metadataAddr: string, ownerAddr: string, proposalOwner: string, prodMsgValue: string, devMsgValue: string): Promise<string | boolean> {  
+export async function createNewDaoOnProdAndDev(sender: Sender, client : TonClient, fee: string, metadataAddr: string, ownerAddr: string, proposalOwner: string, prodMsgValue: string, devMsgValue: string, 
+    prodReleaseMode: ReleaseMode = ReleaseMode.PRODUCTION, devReleaseMode: ReleaseMode = ReleaseMode.DEVELOPMENT): Promise<string | boolean> {  
 
     if (!sender.address) {
         console.log(`sender address is not defined`);        
@@ -79,8 +76,8 @@ export async function createNewDaoOnProdAndDev(sender: Sender, client : TonClien
     };
     
     const routerContract = client.open(await Router.fromInit());
-    const prodRegistry = await getRegistry(client, ReleaseMode.PRODUCTION);
-    const devRegistry = await getRegistry(client, ReleaseMode.DEVELOPMENT);
+    const prodRegistry = await getRegistry(client, prodReleaseMode);
+    const devRegistry = await getRegistry(client, devReleaseMode);
 
     if (!prodRegistry || !devRegistry) return false;
     let prodRegistryContract = client.open(await Registry.fromInit(BigInt(ReleaseMode.PRODUCTION)));

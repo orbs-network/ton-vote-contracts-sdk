@@ -2,7 +2,8 @@ import { Transaction } from "ton";
 
 export enum ReleaseMode {
     PRODUCTION = 0,
-    DEVELOPMENT = 1
+    DEVELOPMENT = 1,
+    DEVELOPMENT_2 = 2
 }
 
 export interface TxData {
