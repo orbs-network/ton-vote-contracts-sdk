@@ -9,7 +9,7 @@ import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, Voti
 import { Router } from "../contracts/output/ton-vote_Router";
 
 
-export async function getRouter(client : TonClient, fee: string): Promise<string> {  
+export async function getRouter(client : TonClient): Promise<string> {  
     let routerContract = client.open(await Router.fromInit());
     return routerContract.address.toString();
 }

@@ -80,7 +80,7 @@ export async function createNewDaoOnProdAndDev(sender: Sender, client : TonClien
     const devRegistry = await getRegistry(client, devReleaseMode);
 
     if (!prodRegistry || !devRegistry) return false;
-    let prodRegistryContract = client.open(await Registry.fromInit(BigInt(ReleaseMode.PRODUCTION)));
+    let prodRegistryContract = client.open(await Registry.fromInit(BigInt(prodReleaseMode)));
 
     const nextDaoId = await prodRegistryContract.getNextDaoId();
     let daoContract = client.open(await Dao.fromInit(prodRegistryContract.address, nextDaoId));
