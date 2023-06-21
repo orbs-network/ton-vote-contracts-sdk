@@ -5,7 +5,7 @@ import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
 import { Transaction } from 'ton-core';
 import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData, VotingPowerStrategy, VotingPowerStrategyType } from "./interfaces";
-import {addressStringToTupleItem, cellToAddress, intToTupleItem } from "./helpers";
+import {addressStringToTupleItem, cellToAddress, intToTupleItem, sleep } from "./helpers";
 
 
 // import * as fs from 'fs';
@@ -177,8 +177,8 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
 
   const nextItemIndex = Number(res.result[0].value);
 
-  const batchSize = 100; // set the batch size
-  const batches = Math.ceil(nextItemIndex / batchSize); // calculate the number of batches
+  const batchSize = 100;
+  const batches = Math.ceil(nextItemIndex / batchSize);
   
   console.log(`fetching ${nextItemIndex} nft items (batche size = ${batchSize})`);
   
@@ -220,6 +220,8 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
 
       })();
     }));
+
+    sleep(100);
   }
   
   return allNftItemsHolders;
