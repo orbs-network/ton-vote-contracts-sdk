@@ -25,7 +25,7 @@ export async function getClientV2(customEndpoint?: string, apiKey?: string): Pro
 
 export async function getClientV4(customEndpoint?: string): Promise<TonClient4> {
   const endpoint = customEndpoint || "https://mainnet-v4.tonhubapi.com";
-  return new TonClient4({ endpoint });
+  return new TonClient4({ endpoint, timeout: 15000 });
 }
 
 export async function getTransactions(
@@ -156,7 +156,98 @@ function extractValueFromStrategy(votingPowerStrategies: VotingPowerStrategy[], 
   return strategy.arguments.find((arg) => arg.name === nameFilter)?.value;
 } 
 
-export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<{ [key: string]: number } > {
+export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<{ [key: string]: number }> {
+  let allNftItemsHolders: { [key: string]: number } = {};
+  let nftAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, 'nft-address');
+  const maxRetries = 5;
+
+  if (!nftAddress) return allNftItemsHolders;
+
+  let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(nftAddress!), 'get_collection_data');
+
+  if (!res.result.length) {
+    console.log('nft collection not exists for proposal with metadata: ', proposalMetadata);
+    return allNftItemsHolders;
+  }
+    
+  if (res.result[0].type != 'int') {
+    console.log('Error: could not extract next-item-value from nft collection (type error)');
+    return allNftItemsHolders;
+  }
+
+  const nextItemIndex = Number(res.result[0].value);
+
+  const batchSize = 100;
+  const batches = Math.ceil(nextItemIndex / batchSize);
+  
+  console.log(`fetching ${nextItemIndex} nft items (batche size = ${batchSize})`);
+  
+  for (let i = 0; i < batches; i++) {
+
+    const batchStartIndex = i * batchSize;
+    const batchEndIndex = Math.min((i + 1) * batchSize, nextItemIndex);
+
+    console.log(`fetching batch #${i} ...`);
+    const promises = Array.from({ length: batchEndIndex - batchStartIndex }, (_, j) => {
+      const index = batchStartIndex + j;
+      
+      return (async () => {
+        let attempt = 0;
+        let success = false;
+        while (!success && attempt < maxRetries) {
+          try {
+            let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(nftAddress!), 'get_nft_address_by_index', intToTupleItem(index));
+        
+            if (res.result[0].type != 'slice') {
+              console.log(`unexpected result type from runMethod on get_nft_address_by_index on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
+              return;
+            }
+        
+            let nftItemAddress = cellToAddress(res.result[0].cell);
+                  
+            res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
+        
+            if (!res || !res.result || !res.result[3]) {
+              console.log(`could not extract result from nft ${nftItemAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
+              return;
+            }
+    
+            if (res.result[3].type != 'slice') {
+              console.log(`unexpected result type from runMethod on get_nft_data on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
+              return;
+            }
+    
+            const address = cellToAddress(res.result[3].cell).toString();
+            if (allNftItemsHolders.hasOwnProperty(address)) {
+              allNftItemsHolders[address] += 1;
+            } else {
+              allNftItemsHolders[address] = 1;
+            }
+    
+            success = true;
+
+          } catch (error) {
+            attempt++;
+            console.log(`attempt ${attempt} failed, retrying...`);
+            sleep(100);
+          }
+        }
+      })();
+    });
+
+    const results = await Promise.allSettled(promises);
+
+    results.forEach(result => {
+      if (result.status === 'rejected') {
+        throw new Error(`One of the promises was rejected while fetching NFT holders for nft collection ${nftAddress} : ${result.reason}`);
+      }
+    });
+  }
+
+  return allNftItemsHolders;
+}
+
+export async function _getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<{ [key: string]: number } > {
 
   let allNftItemsHolders: { [key: string]: number } = {};
   let nftAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, 'nft-address');
