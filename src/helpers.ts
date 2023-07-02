@@ -178,3 +178,39 @@ export function storeComment(msg: string) {
       b_0.storeStringTail(msg);
   };
 }
+
+export async function promiseAllWithRetry(promises: Promise<any>[], retries: number = 3): Promise<any> {
+
+  try {
+    return await Promise.all(promises);
+  
+  } catch (err) {
+  
+    if (retries > 0) {
+      console.log(`Retry attempt ${4 - retries} failed, retrying...`);
+      await promiseAllWithRetry(promises, retries - 1);
+    } else {
+      console.error('All retry attempts failed.');
+      throw err;
+    }
+  
+  }
+}
+
+export async function executeMethodWithRetry<T extends {}, K extends keyof T>(instance: T, methodName: K, retries: number = 3): Promise<any> {
+  try {
+    if (methodName in instance && typeof instance[methodName] === 'function') {
+      return await (instance[methodName] as any)();
+    } else {
+      throw new Error(`No method named "${String(methodName)}" found`);
+    }
+  } catch (err) {
+    if (retries > 0) {
+      console.log(`Retry attempt ${4 - retries} failed, retrying...`);
+      return await executeMethodWithRetry(instance, methodName, retries - 1);
+    } else {
+      console.error('All retry attempts failed.');
+      throw err;
+    }
+  }
+}

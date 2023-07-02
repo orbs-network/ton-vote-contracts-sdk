@@ -1,4 +1,4 @@
-import { min } from "./helpers";
+import { executeMethodWithRetry, min, promiseAllWithRetry } from "./helpers";
 import { Registry } from '../contracts/output/ton-vote_Registry'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
@@ -108,7 +108,7 @@ async function getDaosAsc(client : TonClient, releaseMode: ReleaseMode, startId:
         promises.push(registryContract.getDaoAddress(BigInt(id)).then(daoAddr => daoAddresses.push(daoAddr.toString())));
       }
     
-      await Promise.all(promises);
+      await promiseAllWithRetry(promises);
     }
           
     return {endDaoId, daoAddresses: daoAddresses};
@@ -117,8 +117,8 @@ async function getDaosAsc(client : TonClient, releaseMode: ReleaseMode, startId:
 export async function getDaoState(client : TonClient, daoAddr: string): Promise<DaoState> {  
 
     let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
-    const daoState = await daoContract.getState();
-
+    const daoState = await executeMethodWithRetry(daoContract, 'getState')
+    
     return {
         registry: daoState.registry.toString(),
         owner: daoState.owner.toString(),
@@ -131,9 +131,8 @@ export async function getDaoState(client : TonClient, daoAddr: string): Promise<
 
 export async function getDaoMetadata(client : TonClient, metadataAddr: string): Promise<MetadataArgs> {  
 
-    const metadataContract = client.open(Metadata.fromAddress(Address.parse(metadataAddr)));
-    
-    const metadata = await metadataContract.getState();
+    const metadataContract = client.open(Metadata.fromAddress(Address.parse(metadataAddr)));    
+    const metadata = await executeMethodWithRetry(metadataContract, 'getState');
 
     return {
         about: metadata.about, 
@@ -187,7 +186,7 @@ async function getDaoProposalsDesc(client : TonClient, daoAddr: string, startId:
             batchPromises.push(daoAddrPromise);
         }
         
-        await Promise.all(batchPromises);
+        await promiseAllWithRetry(batchPromises);
     }
 
     return {endProposalId: endProposalId-1, proposalAddresses};
@@ -216,8 +215,8 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
           batchPromises.push(proposalDeployer.getProposalAddr(BigInt(id)));
         }
     
-        const batchResults = await Promise.all(batchPromises);
-        proposalAddresses.push(...batchResults.map((addr) => addr.toString()));
+        const batchResults = await promiseAllWithRetry(batchPromises);
+        proposalAddresses.push(...batchResults.map((addr: Address) => addr.toString()));
     }
 
     return {endProposalId, proposalAddresses};
@@ -285,8 +284,8 @@ export function extractVotingPowerStrategies(votingPowerStrategiesStr: string): 
 
 export async function getProposalMetadata(client : TonClient, client4: TonClient4, proposalAddr: string): Promise<ProposalMetadata> {
     let proposal = client.open(Proposal.fromAddress(Address.parse(proposalAddr)));
+    const state = await executeMethodWithRetry(proposal, 'getState');
 
-    const state = await proposal.getState();
     const id = Number(state.id);
     const proposalDeployer = (state.proposalDeployer).toString();
     const proposalStartTime = Number(state.proposalStartTime);
