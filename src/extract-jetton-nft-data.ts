@@ -1,12 +1,9 @@
-import {getHttpEndpoint} from "@orbs-network/ton-access";
 import {Address, Slice, TonClient, TupleReader} from "ton";
 import {Sha256} from "@aws-crypto/sha256-js";
 import axios from "axios";
 import {parseDict} from "ton-core/dist/dict/parseDict";
 import {bitsToPaddedBuffer} from "ton-core/dist/boc/utils/paddedBits";
 
-
-type persistenceType = "onchain" | "offchain_private_domain" | "offchain_ipfs";
 
 type JettonMetaDataKeys =
     | "name"
