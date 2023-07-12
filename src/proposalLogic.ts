@@ -454,3 +454,4 @@ function bigintToBase64(bn: BigInt) {
 //   const commentData = JSON.parse(PROPOSAL_ABI).types.find((o: {name: string}) => o.name == 'Comment');
 //   return Number(commentData.header);    
 // }
+
