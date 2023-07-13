@@ -56,20 +56,21 @@ async function readContent(res: { gas_used: number; stack: TupleReader }) {
 }
 
 export async function readNftMetadata(client: TonClient, address: string) {
+    
     const nftCollectionAddress = Address.parse(address);
-    const res = await client.runMethod(nftCollectionAddress, "get_collection_data")
-    res.stack.skip(1)
+    const res = await client.runMethod(nftCollectionAddress, "get_collection_data");
+    res.stack.skip(1);
 
     return await readContent(res);
 }
 
 export async function readJettonMetadata(client: TonClient, address: string) {
+
     const jettonMinterAddress = Address.parse(address);
-
     const res = await client.runMethod( jettonMinterAddress, 'get_jetton_data');
-    res.stack.skip(3)
+    res.stack.skip(3);
 
-    return await readContent(res)
+    return await readContent(res);
 }
 
 function parseJettonOnchainMetadata(contentSlice: Slice) : {

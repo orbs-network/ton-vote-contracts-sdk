@@ -74,8 +74,9 @@ examples:
 {name: 'blacklist', value: 'EQBeHRBlsDK-2ZGlmRb7D_WwOY0gObuXrkRb-RC_TWI2Awll, EQBXOjSadD0rTzWTESeHroy33SlcbqBkYSCmA02dEgMIcv0G'}
 {name: 'jetton-address', value: 'EQBeHRBlsDK-2ZGlmRb7D_WwOY0gObuXrkRb-RC_TWI2Awll'}
 */
+
 export interface VotingPowerStrategyArg {
-    name: string, 
+    name: 'nft-address' | 'jetton-address', 
     value: string
 }
 
@@ -120,6 +121,8 @@ export interface ProposalMetadata {
     description: string;
     quorum: string;
     hide: boolean;
+    jettonMetadata?: any,
+    nftMetadata?: any
 }
 
 export interface Votes {

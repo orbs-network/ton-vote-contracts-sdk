@@ -7,6 +7,7 @@ import { Proposal } from '../contracts/output/ton-vote_Proposal';
 import { TonClient, TonClient4, Address } from "ton";
 import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType, ReleaseMode, DaoState, RegistryState } from "./interfaces";
 import { Router } from "../contracts/output/ton-vote_Router";
+import { readJettonMetadata, readNftMetadata } from "./extract-jetton-nft-data";
 
 
 export async function getRouter(client : TonClient): Promise<string> {  
@@ -282,6 +283,29 @@ export function extractVotingPowerStrategies(votingPowerStrategiesStr: string): 
 
 }
 
+async function getNftMetadata(client : TonClient, votingPowerStrategies: VotingPowerStrategy[]) {
+
+    try {
+        if (votingPowerStrategies[0].arguments[0].name != 'nft-address') return;
+        const nftMetadata = await readNftMetadata(client, votingPowerStrategies[0].arguments[0].value);    
+    } catch (err) {
+        console.log(`unable to extract nft metadata`);
+        return;        
+    }
+
+}
+
+async function getJettonMetadata(client : TonClient, votingPowerStrategies: VotingPowerStrategy[]) {
+
+    try {
+        if (votingPowerStrategies[0].arguments[0].name != 'jetton-address') return;
+        const jettonMetadata = await readJettonMetadata(client, votingPowerStrategies[0].arguments[0].value);    
+    } catch (err) {
+        console.log(`unable to extract jetton metadata`);
+        return;        
+    }
+
+}
 export async function getProposalMetadata(client : TonClient, client4: TonClient4, proposalAddr: string): Promise<ProposalMetadata> {
     let proposal = client.open(Proposal.fromAddress(Address.parse(proposalAddr)));
     const state = await executeMethodWithRetry(proposal, 'getState');
@@ -295,13 +319,18 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
     const hide = state.hide;
     const votingSystem = extractVotingSystem(state.votingSystem);
     const votingPowerStrategies = extractVotingPowerStrategies(state.votingPowerStrategies);
-    const mcSnapshotBlock = await getBlockFromTime(client4, proposalSnapshotTime);
-    
+
+    let [mcSnapshotBlock, nftMetadata, jettonMetadata] = await Promise.all([
+        getBlockFromTime(client4, proposalSnapshotTime),
+        getNftMetadata(client, votingPowerStrategies),
+        getJettonMetadata(client, votingPowerStrategies)
+      ]);
+      
     const title = state.title;
     const description = state.description;
 
     return {id, proposalDeployer, mcSnapshotBlock, proposalStartTime, proposalEndTime, proposalSnapshotTime, 
-        votingSystem, votingPowerStrategies, title, description, quorum, hide};
+        votingSystem, votingPowerStrategies, title, description, quorum, hide, jettonMetadata, nftMetadata};
 }
 
 async function getBlockFromTime(clientV4: TonClient4, utime: number): Promise<number> {
