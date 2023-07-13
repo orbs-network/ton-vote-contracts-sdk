@@ -287,25 +287,24 @@ async function getNftMetadata(client : TonClient, votingPowerStrategies: VotingP
 
     try {
         if (votingPowerStrategies[0].arguments[0].name != 'nft-address') return;
-        const nftMetadata = await readNftMetadata(client, votingPowerStrategies[0].arguments[0].value);    
+        return await readNftMetadata(client, votingPowerStrategies[0].arguments[0].value);    
     } catch (err) {
         console.log(`unable to extract nft metadata`);
         return;        
     }
-
 }
 
 async function getJettonMetadata(client : TonClient, votingPowerStrategies: VotingPowerStrategy[]) {
 
     try {
         if (votingPowerStrategies[0].arguments[0].name != 'jetton-address') return;
-        const jettonMetadata = await readJettonMetadata(client, votingPowerStrategies[0].arguments[0].value);    
+        return await readJettonMetadata(client, votingPowerStrategies[0].arguments[0].value);    
     } catch (err) {
         console.log(`unable to extract jetton metadata`);
         return;        
     }
-
 }
+
 export async function getProposalMetadata(client : TonClient, client4: TonClient4, proposalAddr: string): Promise<ProposalMetadata> {
     let proposal = client.open(Proposal.fromAddress(Address.parse(proposalAddr)));
     const state = await executeMethodWithRetry(proposal, 'getState');
