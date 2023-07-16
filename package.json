@@ -1,7 +1,7 @@
 {
   "name": "ton-vote-contracts-sdk",
   "description": "sdk for ton vote contracts",
-  "version": "1.1.18",
+  "version": "1.1.98",
   "license": "MIT",
   "author": "Ami Hazbany",
   "main": "dist/src/index.js",
@@ -25,6 +25,8 @@
     "bignumber.js": "^9.1.1",
     "buffer": "^6.0.3",
     "lodash": "^4.17.21",
+    "@types/seedrandom": "^3.0.5",
+    "seedrandom": "^3.0.5",
     "semver": "^7.3.7",
     "ton": "^13.4.1"
   },

@@ -5,7 +5,7 @@ import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
 import { Transaction } from 'ton-core';
 import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData, VotingPowerStrategy, VotingPowerStrategyType } from "./interfaces";
-import {addressStringToTupleItem, cellToAddress, intToTupleItem, sleep } from "./helpers";
+import {addressStringToTupleItem, cellToAddress, chooseRandomKeys, intToTupleItem, sleep } from "./helpers";
 
 
 // import * as fs from 'fs';
@@ -454,4 +454,11 @@ function bigintToBase64(bn: BigInt) {
 //   const commentData = JSON.parse(PROPOSAL_ABI).types.find((o: {name: string}) => o.name == 'Comment');
 //   return Number(commentData.header);    
 // }
+
+export async function chooseRandomVoters(client4: TonClient4, voters: any, m: number) {
+
+  let lastBlock = await client4.getLastBlock();
+  return chooseRandomKeys(lastBlock.last.rootHash, voters, m);
+
+}
 

@@ -8,6 +8,7 @@ import { mnemonicNew, mnemonicToWalletKey } from "ton-crypto";
 import { TonClient, WalletContractV3R2, fromNano, beginCell, TupleItem , TupleBuilder, TupleItemInt } from "ton";
 import fs from "fs";
 import {execSync} from "child_process";
+import seedrandom from 'seedrandom';
 
 
 export async function waitForContractToBeDeployed(client: TonClient, deployedContract: Address) {
@@ -213,4 +214,19 @@ export async function executeMethodWithRetry<T extends {}, K extends keyof T>(in
       throw err;
     }
   }
+}
+
+export function chooseRandomKeys(seed: string, obj: {[key: string]: any}, m: number): string[] {
+  // Create a random generator with a given seed
+  let rng = seedrandom(seed);
+  let keys = Object.keys(obj);
+
+  // Use the Fisher-Yates shuffle algorithm to shuffle the array
+  for (let i = keys.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1)); // Use rng() instead of Math.random()
+      [keys[i], keys[j]] = [keys[j], keys[i]];
+  }
+
+  // Get the first m keys from the shuffled array
+  return keys.slice(0, m);
 }
