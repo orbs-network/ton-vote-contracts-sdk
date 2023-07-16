@@ -455,7 +455,7 @@ function bigintToBase64(bn: BigInt) {
 //   return Number(commentData.header);    
 // }
 
-export async function chooseRandomVoters(client4: TonClient4, voters: any, m: number) {
+export async function chooseRandomVoters(client4: TonClient4, voters: Votes, m: number) {
 
   let lastBlock = await client4.getLastBlock();
   return chooseRandomKeys(lastBlock.last.rootHash, voters, m);
