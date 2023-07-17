@@ -7,7 +7,7 @@ import { Proposal } from '../contracts/output/ton-vote_Proposal';
 import { TonClient, TonClient4, Address } from "ton";
 import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType, ReleaseMode, DaoState, RegistryState } from "./interfaces";
 import { Router } from "../contracts/output/ton-vote_Router";
-import { readJettonMetadata, readNftMetadata } from "./extract-jetton-nft-data";
+import { readJettonMetadata, readNftMetadata } from "./jetton-nft";
 
 
 export async function getRouter(client : TonClient): Promise<string> {  
