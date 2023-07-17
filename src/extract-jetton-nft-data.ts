@@ -56,21 +56,49 @@ async function readContent(res: { gas_used: number; stack: TupleReader }) {
 }
 
 export async function readNftMetadata(client: TonClient, address: string) {
-    
-    const nftCollectionAddress = Address.parse(address);
-    const res = await client.runMethod(nftCollectionAddress, "get_collection_data");
-    res.stack.skip(1);
 
-    return await readContent(res);
+    try {
+        const nftCollectionAddress = Address.parse(address);
+        const res = await client.runMethod(nftCollectionAddress, "get_collection_data");
+        res.stack.skip(1);
+    
+        return await readContent(res); 
+
+    } catch (err) {
+        console.log(`failed to fetch nft metadata`);
+        return {};        
+    }
 }
 
 export async function readJettonMetadata(client: TonClient, address: string) {
 
-    const jettonMinterAddress = Address.parse(address);
-    const res = await client.runMethod( jettonMinterAddress, 'get_jetton_data');
-    res.stack.skip(3);
+    try {
+        const jettonMinterAddress = Address.parse(address);
+        const res = await client.runMethod( jettonMinterAddress, 'get_jetton_data');
+        res.stack.skip(3);
+    
+        return await readContent(res);    
+    } catch (err) {
+        console.log(`failed to fetch jetton metadata`);
+        return {};        
+    }
+}
 
-    return await readContent(res);
+export async function readJettonOrNftMetadata(client: TonClient, address: string) {
+
+    const nftMetadata = await readNftMetadata(client, address);
+    if (nftMetadata) {
+        (nftMetadata as any).type = 'NFT';
+        return nftMetadata;
+    };
+
+    const jettonMetadata = await readJettonMetadata(client, address);
+    if (jettonMetadata) {
+        (jettonMetadata as any).type = 'Jetton';
+        return jettonMetadata;    
+    }
+
+    return {};
 }
 
 function parseJettonOnchainMetadata(contentSlice: Slice) : {
