@@ -65,7 +65,7 @@ export async function readNftMetadata(client: TonClient, address: string) {
         return await readContent(res); 
 
     } catch (err) {
-        console.log(`failed to fetch nft metadata`);
+        console.log(`failed to fetch nft metadata at address ${address}`);
         return {};        
     }
 }
@@ -87,13 +87,13 @@ export async function readJettonMetadata(client: TonClient, address: string) {
 export async function readJettonOrNftMetadata(client: TonClient, address: string) {
 
     const nftMetadata = await readNftMetadata(client, address);
-    if (nftMetadata) {
+    if (Object.keys(nftMetadata).length != 0) {
         (nftMetadata as any).type = 'NFT';
         return nftMetadata;
     };
 
     const jettonMetadata = await readJettonMetadata(client, address);
-    if (jettonMetadata) {
+    if (Object.keys(jettonMetadata).length != 0) {
         (jettonMetadata as any).type = 'Jetton';
         return jettonMetadata;    
     }
