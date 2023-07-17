@@ -180,6 +180,11 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
   const batchSize = 100;
   const batches = Math.ceil(nextItemIndex / batchSize);
   
+  if (batches > 500) {
+    console.log(`nft collection is too big to process`);
+    return allNftItemsHolders;    
+  }
+
   console.log(`fetching ${nextItemIndex} nft items (batche size = ${batchSize})`);
   
   for (let i = 0; i < batches; i++) {
