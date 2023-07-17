@@ -1,8 +1,10 @@
-import {Address, Slice, TonClient, TupleReader} from "ton";
+import {Address, Slice, TonClient, TupleReader, toNano} from "ton";
 import {Sha256} from "@aws-crypto/sha256-js";
 import axios from "axios";
 import {parseDict} from "ton-core/dist/dict/parseDict";
 import {bitsToPaddedBuffer} from "ton-core/dist/boc/utils/paddedBits";
+import { SendTransactionRequest, TonConnectUI } from "@tonconnect/ui-react";
+import { waitForConditionChange, getSeqno, _transferJetton, _transferNft } from "./helpers";
 
 
 type JettonMetaDataKeys =
@@ -165,4 +167,64 @@ async function parseJettonOffchainMetadata(contentSlice: Slice): Promise<{
         metadata: (await axios.get(jsonURI)).data,
         isIpfs: /(^|\/)ipfs[.:]/.test(jsonURI),
     };
+}
+
+
+export async function transferJettons(
+    client: TonClient,
+    tonConnection: TonConnectUI,
+    amount: bigint,
+    jettonWalletAddress: string,
+    toAddress: string
+  ) {
+    
+    const fromAddress = tonConnection.account!.address;
+    const seqno = await getSeqno(client, fromAddress.toString());
+  
+    const tx: SendTransactionRequest = {
+      validUntil: Date.now() + 5 * 60 * 1000,
+      messages: [
+        {
+          address: jettonWalletAddress,
+          amount: toNano(0.05).toString(),
+          stateInit: undefined,
+          payload: _transferJetton(Address.parse(toAddress), Address.parse(fromAddress), amount)
+            .toBoc()
+            .toString("base64"),
+        },
+      ],
+    };
+  
+    await tonConnection.sendTransaction(tx);
+  
+    await waitForConditionChange(getSeqno, [client, fromAddress.toString()], seqno);
+}
+
+export async function transferNft(
+    client: TonClient,
+    tonConnection: TonConnectUI,
+    nftItemAddress: string,
+    toAddress: string
+  ) {
+    
+    const fromAddress = tonConnection.account!.address;
+    const seqno = await getSeqno(client, fromAddress.toString());
+  
+    const tx: SendTransactionRequest = {
+      validUntil: Date.now() + 5 * 60 * 1000,
+      messages: [
+        {
+          address: nftItemAddress,
+          amount: toNano(0.05).toString(),
+          stateInit: undefined,
+          payload: _transferNft(Address.parse(toAddress))
+            .toBoc()
+            .toString("base64"),
+        },
+      ],
+    };
+  
+    await tonConnection.sendTransaction(tx);
+  
+    await waitForConditionChange(getSeqno, [client, fromAddress.toString()], seqno);
 }

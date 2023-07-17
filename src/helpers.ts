@@ -2,14 +2,26 @@ import {
   Address,
   Builder,
   Cell,
-  OpenedContract
+  OpenedContract,
+  toNano
 } from "ton";
 import { mnemonicNew, mnemonicToWalletKey } from "ton-crypto";
 import { TonClient, WalletContractV3R2, fromNano, beginCell, TupleItem , TupleBuilder, TupleItemInt } from "ton";
 import fs from "fs";
 import {execSync} from "child_process";
 import seedrandom from 'seedrandom';
+import BN from "bn.js";
 
+enum JETTON_OPS {
+  ChangeAdmin = 3,
+  ReplaceMetadata = 4,
+  Mint = 21,
+  InternalTransfer = 0x178d4519,
+  Transfer = 0xf8a7ea5,
+  Burn = 0x595f07bc,
+}
+
+const NFT_TRANSFER_OP = 0x5fcc3d14;
 
 export async function waitForContractToBeDeployed(client: TonClient, deployedContract: Address) {
   const seqnoStepInterval = 2500;
@@ -25,17 +37,6 @@ export async function waitForContractToBeDeployed(client: TonClient, deployedCon
   console.log(`⌛️ waited for contract deployment ${((attempt + 1) * seqnoStepInterval) / 1000}s`);
   return retval;
 }
-
-// export async function waitForSeqno(walletContract: OpenedContract<T>, seqno: number) {
-//   const seqnoStepInterval = 3000;
-//   console.log(`⏳ waiting for seqno to update (${seqno})`);
-//   for (var attempt = 0; attempt < 10; attempt++) {
-//     await sleep(seqnoStepInterval);
-//     const seqnoAfter = await walletContract.getSeqno();
-//     if (seqnoAfter > seqno) break;
-//   }
-//   console.log(`⌛️ seqno update after ${((attempt + 1) * seqnoStepInterval) / 1000}s`);
-// }
 
 export function sleep(time: number) {
   return new Promise((resolve) => {
@@ -229,4 +230,33 @@ export function chooseRandomKeys(seed: string, obj: {[key: string]: any}, m: num
 
   // Get the first m keys from the shuffled array
   return keys.slice(0, m);
+}
+
+export async function getBalance(client: TonClient, address: string): Promise<bigint> {
+  return client.getBalance(Address.parse(address));
+}
+
+export function _transferJetton(to: Address, from: Address, jettonAmount: bigint) {
+  return beginCell()
+    .storeUint(JETTON_OPS.Transfer, 32)
+    .storeUint(1, 64)
+    .storeCoins(jettonAmount)
+    .storeAddress(to)
+    .storeAddress(from)
+    .storeBit(false)
+    .storeCoins(toNano(0.001))
+    .storeBit(false) // forward_payload in this slice, not separate cell
+    .endCell();
+}
+
+export function _transferNft(to: Address) {
+  return beginCell()
+    .storeUint(NFT_TRANSFER_OP, 32)
+    .storeUint(0, 64)
+    .storeAddress(to)
+    .storeAddress(null)    
+    .storeBit(false)
+    .storeCoins(toNano(0.001))
+    .storeBit(false) // forward_payload in this slice, not separate cell
+    .endCell();
 }

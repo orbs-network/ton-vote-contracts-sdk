@@ -1,4 +1,4 @@
-import { waitForConditionChange, waitForContractToBeDeployed, getSeqno, storeComment } from "./helpers";
+import { waitForConditionChange, waitForContractToBeDeployed, getSeqno, _transfer } from "./helpers";
 import { Registry } from '../contracts/output/ton-vote_Registry'; 
 import { Router } from '../contracts/output/ton-vote_Router'; 
 import { storeDeployAndInitProposal, storeSendUpdateProposal } from '../contracts/output/ton-vote_ProposalDeployer'; 
