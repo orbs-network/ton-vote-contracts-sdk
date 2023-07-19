@@ -244,7 +244,7 @@ export function _transferJetton(to: Address, from: Address, jettonAmount: bigint
     .storeAddress(to)
     .storeAddress(from)
     .storeBit(false)
-    .storeCoins(toNano(0.001))
+    .storeCoins(toNano('0.001'))
     .storeBit(false) // forward_payload in this slice, not separate cell
     .endCell();
 }
@@ -256,7 +256,7 @@ export function _transferNft(to: Address) {
     .storeAddress(to)
     .storeAddress(null)    
     .storeBit(false)
-    .storeCoins(toNano(0.001))
+    .storeCoins(toNano('0.005'))
     .storeBit(false) // forward_payload in this slice, not separate cell
     .endCell();
 }

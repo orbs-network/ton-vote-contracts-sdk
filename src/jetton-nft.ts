@@ -57,7 +57,7 @@ async function readContent(res: { gas_used: number; stack: TupleReader }) {
     }
 }
 
-export async function readNftMetadata(client: TonClient, address: string) {
+export async function readNftCollectionMetadata(client: TonClient, address: string) {
 
     try {
         const nftCollectionAddress = Address.parse(address);
@@ -68,6 +68,20 @@ export async function readNftMetadata(client: TonClient, address: string) {
 
     } catch (err) {
         console.log(`failed to fetch nft metadata at address ${address}`);
+        return {};        
+    }
+}
+
+export async function readNftItemMetadata(client: TonClient, address: string) {
+
+    try {
+        const res = await client.runMethod(Address.parse(address), "get_nft_data");
+        res.stack.skip(4);
+    
+        return await readContent(res); 
+
+    } catch (err) {
+        console.log(`failed to fetch nft item metadata at address ${address}`);
         return {};        
     }
 }
@@ -88,7 +102,7 @@ export async function readJettonMetadata(client: TonClient, address: string) {
 
 export async function readJettonOrNftMetadata(client: TonClient, address: string) {
 
-    const nftMetadata = await readNftMetadata(client, address);
+    const nftMetadata = await readNftCollectionMetadata(client, address);
     if (Object.keys(nftMetadata).length != 0) {
         (nftMetadata as any).type = 'NFT';
         return nftMetadata;
@@ -186,7 +200,7 @@ export async function transferJettons(
       messages: [
         {
           address: jettonWalletAddress,
-          amount: toNano(0.05).toString(),
+          amount: (toNano('0.1')).toString(),
           stateInit: undefined,
           payload: _transferJetton(Address.parse(toAddress), Address.parse(fromAddress), amount)
             .toBoc()
@@ -215,7 +229,7 @@ export async function transferNft(
       messages: [
         {
           address: nftItemAddress,
-          amount: toNano(0.05).toString(),
+          amount: toNano('0.05').toString(),
           stateInit: undefined,
           payload: _transferNft(Address.parse(toAddress))
             .toBoc()
