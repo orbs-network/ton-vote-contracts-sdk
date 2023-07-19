@@ -7,7 +7,7 @@ import { Proposal } from '../contracts/output/ton-vote_Proposal';
 import { TonClient, TonClient4, Address } from "ton";
 import { MetadataArgs, ProposalMetadata, VotingPowerStrategy, VotingSystem, VotingSystemType, VotingPowerStrategyType, ReleaseMode, DaoState, RegistryState } from "./interfaces";
 import { Router } from "../contracts/output/ton-vote_Router";
-import { readJettonMetadata, readNftCollectionMetadata } from "./jetton-nft";
+import { readJettonMinterMetadata, readNftCollectionMetadata } from "./jetton-nft";
 
 
 export async function getRouter(client : TonClient): Promise<string> {  
@@ -298,7 +298,7 @@ async function getJettonMetadata(client : TonClient, votingPowerStrategies: Voti
 
     try {
         if (votingPowerStrategies[0].arguments[0].name != 'jetton-address') return;
-        return await readJettonMetadata(client, votingPowerStrategies[0].arguments[0].value);    
+        return await readJettonMinterMetadata(client, votingPowerStrategies[0].arguments[0].value);    
     } catch (err) {
         console.log(`unable to extract jetton metadata`);
         return;        

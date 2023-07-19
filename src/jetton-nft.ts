@@ -1,4 +1,4 @@
-import {Address, Slice, TonClient, TupleReader, toNano} from "ton";
+import {Address, Slice, TonClient, TupleItemCell, TupleItemInt, TupleReader, toNano} from "ton";
 import {Sha256} from "@aws-crypto/sha256-js";
 import axios from "axios";
 import {parseDict} from "ton-core/dist/dict/parseDict";
@@ -75,10 +75,41 @@ export async function readNftCollectionMetadata(client: TonClient, address: stri
 export async function readNftItemMetadata(client: TonClient, address: string) {
 
     try {
-        const res = await client.runMethod(Address.parse(address), "get_nft_data");
-        res.stack.skip(4);
+
+        const nftItemAddress = Address.parse(address);
+        const nftData = await client.runMethod(nftItemAddress, "get_nft_data")
+        nftData.stack.skip(1)
+        const index = nftData.stack.readBigNumber()
+        const collection_address = nftData.stack.readAddress()
+        nftData.stack.skip(1)
+        const individual_item_content = nftData.stack.readCell()
     
-        return await readContent(res); 
+        const arg1: TupleItemInt = {
+            type: "int",
+            value: index
+        }
+    
+        const arg2: TupleItemCell = {
+            type: "cell",
+            cell: individual_item_content
+        }
+    
+        const nftCollectionContent = await client.runMethod(collection_address, "get_nft_content", [arg1, arg2])
+    
+        let linkSlice = nftCollectionContent.stack.readCell().beginParse()
+    
+        const pathBase = bitsToPaddedBuffer(linkSlice.loadBits(linkSlice.remainingBits)).toString()
+    
+        linkSlice = individual_item_content.beginParse()
+        const remainingBits = linkSlice.remainingBits
+    
+        if(remainingBits == 0) {
+            return (await axios.get(pathBase)).data
+        }
+    
+        const pathItem = bitsToPaddedBuffer(linkSlice.loadBits(linkSlice.remainingBits)).toString()
+    
+        return (await axios.get(pathBase+pathItem)).data
 
     } catch (err) {
         console.log(`failed to fetch nft item metadata at address ${address}`);
@@ -86,21 +117,29 @@ export async function readNftItemMetadata(client: TonClient, address: string) {
     }
 }
 
-export async function readJettonMetadata(client: TonClient, address: string) {
+export async function readJettonWalletMedata(client: TonClient, address: string) {
+
+    const walletData = await client.runMethod(Address.parse(address), "get_wallet_data")
+    walletData.stack.skip(2)
+    return readJettonMinterMetadata(client, walletData.stack.readAddress().toString())
+}
+
+export async function readJettonMinterMetadata(client: TonClient, address: string) {
 
     try {
         const jettonMinterAddress = Address.parse(address);
         const res = await client.runMethod( jettonMinterAddress, 'get_jetton_data');
         res.stack.skip(3);
     
-        return await readContent(res);    
+        return await readContent(res);
+
     } catch (err) {
         console.log(`failed to fetch jetton metadata`);
         return {};        
     }
 }
 
-export async function readJettonOrNftMetadata(client: TonClient, address: string) {
+export async function readJettonMinterOrNftCollectionMetadata(client: TonClient, address: string) {
 
     const nftMetadata = await readNftCollectionMetadata(client, address);
     if (Object.keys(nftMetadata).length != 0) {
@@ -108,7 +147,7 @@ export async function readJettonOrNftMetadata(client: TonClient, address: string
         return nftMetadata;
     };
 
-    const jettonMetadata = await readJettonMetadata(client, address);
+    const jettonMetadata = await readJettonMinterMetadata(client, address);
     if (Object.keys(jettonMetadata).length != 0) {
         (jettonMetadata as any).type = 'Jetton';
         return jettonMetadata;    
