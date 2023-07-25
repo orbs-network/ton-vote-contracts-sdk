@@ -77,11 +77,11 @@ export async function readNftItemMetadata(client: TonClient, address: string) {
     try {
 
         const nftItemAddress = Address.parse(address);
-        const nftData = await client.runMethod(nftItemAddress, "get_nft_data")
+        const nftData = await client.runMethod(nftItemAddress, "get_nft_data")        
         nftData.stack.skip(1)
         const index = nftData.stack.readBigNumber()
         const collection_address = nftData.stack.readAddress()
-        nftData.stack.skip(1)
+        const nftItemOwner = nftData.stack.readAddress()
         const individual_item_content = nftData.stack.readCell()
     
         const arg1: TupleItemInt = {
@@ -109,7 +109,7 @@ export async function readNftItemMetadata(client: TonClient, address: string) {
     
         const pathItem = bitsToPaddedBuffer(linkSlice.loadBits(linkSlice.remainingBits)).toString()
     
-        return (await axios.get(pathBase+pathItem)).data
+        return {...(await axios.get(pathBase+pathItem)).data, nftItemOwner}
 
     } catch (err) {
         console.log(`failed to fetch nft item metadata at address ${address}`);
@@ -117,11 +117,13 @@ export async function readNftItemMetadata(client: TonClient, address: string) {
     }
 }
 
-export async function readJettonWalletMedata(client: TonClient, address: string) {
+export async function readJettonWalletMetadata(client: TonClient, address: string) {
 
     const walletData = await client.runMethod(Address.parse(address), "get_wallet_data")
-    walletData.stack.skip(2)
-    return readJettonMinterMetadata(client, walletData.stack.readAddress().toString())
+    const jettonWalletBalance = walletData.stack.readNumber();
+    const ownerAddress = walletData.stack.readAddress();
+
+    return {...await readJettonMinterMetadata(client, walletData.stack.readAddress().toString()), jettonWalletBalance, ownerAddress}
 }
 
 export async function readJettonMinterMetadata(client: TonClient, address: string) {
