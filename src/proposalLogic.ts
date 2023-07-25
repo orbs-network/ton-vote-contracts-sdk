@@ -156,8 +156,8 @@ function extractValueFromStrategy(votingPowerStrategies: VotingPowerStrategy[], 
   return strategy.arguments.find((arg) => arg.name === nameFilter)?.value;
 } 
 
-export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<{ [key: string]: number }> {
-  let allNftItemsHolders: { [key: string]: number } = {};
+export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: ProposalMetadata): Promise<{ [key: string]: string[] }> {
+  let allNftItemsHolders: { [key: string]: string[] } = {};
   let nftAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, 'nft-address');
   const maxRetries = 5;
 
@@ -223,12 +223,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
             }
     
             const address = cellToAddress(res.result[3].cell).toString();
-            if (allNftItemsHolders.hasOwnProperty(address)) {
-              allNftItemsHolders[address] += 1;
-            } else {
-              allNftItemsHolders[address] = 1;
-            }
-    
+            allNftItemsHolders[address].concat(nftItemAddress.toString());
             success = true;
 
           } catch (error) {
@@ -252,7 +247,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
   return allNftItemsHolders;
 }
 
-export async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategyType, allNftItemsHolders: { [key: string]: number }): Promise<string> {
+export async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategyType, allNftItemsHolders: { [key: string]: string[] }): Promise<string> {
 
   if (strategy == VotingPowerStrategyType.TonBalance) {
     return (
@@ -328,7 +323,7 @@ export async function getSingleVoterPower(clientV4: TonClient4, voter: string, p
   }
 
   else if (strategy == VotingPowerStrategyType.NftCcollection) {    
-    return (toNano(allNftItemsHolders[voter] || 0)).toString();
+    return (toNano(allNftItemsHolders[voter].length)).toString();
   }
 
   else if (strategy == VotingPowerStrategyType.NftCcollection_1Wallet1Vote) {
@@ -346,7 +341,7 @@ export async function getVotingPower(
   transactions: Transaction[],
   votingPower: VotingPower = {},
   strategy: VotingPowerStrategyType =  VotingPowerStrategyType.TonBalance,
-  nftItemsHolders: { [key: string]: number } = {}
+  nftItemsHolders: { [key: string]: string[] } = {}
 ): Promise<VotingPower> {
   let voters = Object.keys(getAllVotes(transactions, proposalMetadata));
 
@@ -355,8 +350,6 @@ export async function getVotingPower(
   if (!newVoters) return votingPower;
 
   if (!proposalMetadata.mcSnapshotBlock) return votingPower;
-
-  console.log(`strategy: ${strategy}, nftItemsHolders: ${nftItemsHolders}`);
   
   const batchSize = 20;
 
