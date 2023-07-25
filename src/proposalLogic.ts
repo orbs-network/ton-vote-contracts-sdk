@@ -223,12 +223,15 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
             }
     
             const address = cellToAddress(res.result[3].cell).toString();
-            allNftItemsHolders[address].concat(nftItemAddress.toString());
+
+            if (!allNftItemsHolders[address]) allNftItemsHolders[address] = [];
+            allNftItemsHolders[address].push(nftItemAddress.toString());
+
             success = true;
 
           } catch (error) {
             attempt++;
-            console.log(`attempt ${attempt} failed, retrying...`);
+            console.log(`attempt ${attempt} failed with error ${error}, retrying...`);
             sleep(100);
           }
         }
@@ -240,6 +243,103 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
     results.forEach(result => {
       if (result.status === 'rejected') {
         throw new Error(`One of the promises was rejected while fetching NFT holders for nft collection ${nftAddress} : ${result.reason}`);
+      }
+    });
+  }
+
+  return allNftItemsHolders;
+}
+
+export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, collectionAddr: string, mcBlockNum: undefined | number): Promise<{ [key: string]: string[] }> {
+  let allNftItemsHolders: { [key: string]: string[] } = {};
+  const maxRetries = 5;
+
+  if (!mcBlockNum) mcBlockNum = (await clientV4.getLastBlock()).last.seqno
+  if (!mcBlockNum) {
+    console.log(`failed to fetch last mc block number`);
+    return allNftItemsHolders;
+  }
+  
+  let res = await clientV4.runMethod(mcBlockNum, Address.parse(collectionAddr!), 'get_collection_data');
+
+  if (res.exitCode) {
+    console.log(`nft collection not exists for nft collection at address ${collectionAddr}`);
+    return allNftItemsHolders;
+  }
+    
+  if (res.result[0].type != 'int') {
+    console.log('Error: could not extract next-item-value from nft collection (type error)');
+    return allNftItemsHolders;
+  }
+
+  const nextItemIndex = Number(res.result[0].value);
+
+  const batchSize = 100;
+  const batches = Math.ceil(nextItemIndex / batchSize);
+  
+  if (batches > 500) {
+    console.log(`nft collection is too big to process`);
+    return allNftItemsHolders;    
+  }
+
+  console.log(`fetching ${nextItemIndex} nft items (batche size = ${batchSize})`);
+  
+  for (let i = 0; i < batches; i++) {
+
+    const batchStartIndex = i * batchSize;
+    const batchEndIndex = Math.min((i + 1) * batchSize, nextItemIndex);
+
+    console.log(`fetching batch #${i} ...`);
+    const promises = Array.from({ length: batchEndIndex - batchStartIndex }, (_, j) => {
+      const index = batchStartIndex + j;
+      
+      return (async () => {
+        let attempt = 0;
+        let success = false;
+        while (!success && attempt < maxRetries) {
+          try {
+            let res = await clientV4.runMethod(mcBlockNum!, Address.parse(collectionAddr!), 'get_nft_address_by_index', intToTupleItem(index));
+        
+            if (res.result[0].type != 'slice') {
+              console.log(`unexpected result type from runMethod on get_nft_address_by_index on address: ${collectionAddr}} at block ${mcBlockNum}`);
+              return;
+            }
+        
+            let nftItemAddress = cellToAddress(res.result[0].cell);
+                  
+            res = await clientV4.runMethod(mcBlockNum!, nftItemAddress, 'get_nft_data');
+        
+            if (!res || !res.result || !res.result[3]) {
+              console.log(`could not extract result from nft ${nftItemAddress} at block ${mcBlockNum}`);
+              return;
+            }
+    
+            if (res.result[3].type != 'slice') {
+              console.log(`unexpected result type from runMethod on get_nft_data on address: ${collectionAddr} at block ${mcBlockNum}`);
+              return;
+            }
+    
+            const address = cellToAddress(res.result[3].cell).toString();
+
+            if (!allNftItemsHolders[address]) allNftItemsHolders[address] = [];
+            allNftItemsHolders[address].push(nftItemAddress.toString());
+
+            success = true;
+
+          } catch (error) {
+            attempt++;
+            console.log(`attempt ${attempt} failed with error ${error}, retrying...`);
+            sleep(10);
+          }
+        }
+      })();
+    });
+
+    const results = await Promise.allSettled(promises);
+
+    results.forEach(result => {
+      if (result.status === 'rejected') {
+        throw new Error(`One of the promises was rejected while fetching NFT holders for nft collection ${collectionAddr} : ${result.reason}`);
       }
     });
   }
