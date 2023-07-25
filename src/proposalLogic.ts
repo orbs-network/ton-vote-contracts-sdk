@@ -250,15 +250,11 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
   return allNftItemsHolders;
 }
 
-export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, collectionAddr: string, mcBlockNum: undefined | number): Promise<{ [key: string]: string[] }> {
+export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, collectionAddr: string, mcBlockNum: number = -1): Promise<{ [key: string]: string[] }> {
   let allNftItemsHolders: { [key: string]: string[] } = {};
   const maxRetries = 5;
 
-  if (!mcBlockNum) mcBlockNum = (await clientV4.getLastBlock()).last.seqno
-  if (!mcBlockNum) {
-    console.log(`failed to fetch last mc block number`);
-    return allNftItemsHolders;
-  }
+  if (mcBlockNum == -1) mcBlockNum = (await clientV4.getLastBlock()).last.seqno
   
   let res = await clientV4.runMethod(mcBlockNum, Address.parse(collectionAddr!), 'get_collection_data');
 
@@ -298,7 +294,7 @@ export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, c
         let success = false;
         while (!success && attempt < maxRetries) {
           try {
-            let res = await clientV4.runMethod(mcBlockNum!, Address.parse(collectionAddr!), 'get_nft_address_by_index', intToTupleItem(index));
+            let res = await clientV4.runMethod(mcBlockNum, Address.parse(collectionAddr!), 'get_nft_address_by_index', intToTupleItem(index));
         
             if (res.result[0].type != 'slice') {
               console.log(`unexpected result type from runMethod on get_nft_address_by_index on address: ${collectionAddr}} at block ${mcBlockNum}`);
@@ -307,7 +303,7 @@ export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, c
         
             let nftItemAddress = cellToAddress(res.result[0].cell);
                   
-            res = await clientV4.runMethod(mcBlockNum!, nftItemAddress, 'get_nft_data');
+            res = await clientV4.runMethod(mcBlockNum, nftItemAddress, 'get_nft_data');
         
             if (!res || !res.result || !res.result[3]) {
               console.log(`could not extract result from nft ${nftItemAddress} at block ${mcBlockNum}`);
