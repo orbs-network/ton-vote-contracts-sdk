@@ -231,7 +231,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
 
           } catch (error) {
             attempt++;
-            console.log(`attempt ${attempt} failed with error ${error}, retrying...`);
+            console.log(`attempt ${attempt} failed with error ${error} (nftAddress ${nftAddress}), retrying...`);
             sleep(100);
           }
         }
