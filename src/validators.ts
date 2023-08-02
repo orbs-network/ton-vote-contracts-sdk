@@ -60,67 +60,56 @@ export async function getConfig34(client4: TonClient4, block: number) {
 }
 
 
-export async function listProposals() {
+export async function listProposals(client4: TonClient4, block: number) {
     
-    const {client, sender, client4} = await getClientAndSender();
-    // start of cycle 30370953 (submitted before 30380954), 30390541, 30428980
-    const block = 30390541 // 30408900
-
-    const config34 = await getConfig34(client4, block);
-    console.log(config34);
-
-
-    const config11 = await getConfig11(client4, block);    
-    console.log(config11);
-        
     let res = await client4.runMethod(block, Address.parse(CONFIG_ADDR), 'list_proposals');
-
-    console.log('res:', res)
  
+    let proposals: any = {};
+
     for (const r of res.result) {
-        
+
         //@ts-ignore
         for (const l of r.items) {
-            if (l.type === 'tuple') {
-                let phash = l.items[0].value;
-                let unpacked_proposal = l.items[1].items;
-    
-                let expires = unpacked_proposal[0].value;
-                let critical = unpacked_proposal[1].value;
-    
-                let param_id = unpacked_proposal[2].items[0].value;
-                let param_val = unpacked_proposal[2].items[1].cell;
-                let param_hash = unpacked_proposal[2].items[2].value;
-    
-                let vset_id = unpacked_proposal[3].value;
-                console.log('unpacked_proposal[4]: ', unpacked_proposal[4]);
-    
-                let voters_list = unpacked_proposal[4];
-    
-                let weight_remaining = unpacked_proposal[5].value;
-                let rounds_remaining = unpacked_proposal[6].value;
-    
-                let wins = unpacked_proposal[7].value;
-                let losses = unpacked_proposal[8].value;
-    
-                let o = {
-                    phash,
-                    expires,
-                    critical,
-                    param_id,
-                    param_val,
-                    param_hash,
-                    vset_id,
-                    voters_list,
-                    weight_remaining,
-                    rounds_remaining,
-                    wins,
-                    losses
-                };
-    
-                console.log(o);
-            }
+            if (l.type != 'tuple') continue;
+
+            let phash = l.items[0].value;
+            let unpacked_proposal = l.items[1].items;
+
+            let expires = unpacked_proposal[0].value;
+            let critical = unpacked_proposal[1].value;
+
+            let param_id = unpacked_proposal[2].items[0].value;
+            let param_val = unpacked_proposal[2].items[1].cell;
+            let param_hash = unpacked_proposal[2].items[2].value;
+
+            let vset_id = unpacked_proposal[3].value;
+            console.log('unpacked_proposal[4]: ', unpacked_proposal[4]);
+
+            let voters_list = unpacked_proposal[4];
+
+            let weight_remaining = unpacked_proposal[5].value;
+            let rounds_remaining = unpacked_proposal[6].value;
+
+            let wins = unpacked_proposal[7].value;
+            let losses = unpacked_proposal[8].value;
+
+            proposals[phash] = {
+                block,
+                expires,
+                critical,
+                param_id,
+                param_val,
+                param_hash,
+                vset_id,
+                voters_list,
+                weight_remaining,
+                rounds_remaining,
+                wins,
+                losses
+            };
         }
+        
     }
     
+    return proposals;    
 }
