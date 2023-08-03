@@ -1,4 +1,4 @@
-import { Address, TonClient, TonClient4, Cell } from "ton";
+import { Address, TonClient, TonClient4, Cell, TupleItem } from "ton";
 import {parseDict} from "ton-core/dist/dict/parseDict";
 
 
@@ -59,6 +59,26 @@ export async function getConfig34(client4: TonClient4, block: number) {
     return config34.get(34n)
 }
 
+function votersTupleToArr(votersTuple: TupleItem) {
+
+    if (votersTuple.type != 'tuple') return {}
+    
+    let votersArr: string[] = [];
+    
+    while (true) {
+        
+        let nextItem = votersTuple.items[0]
+        if (nextItem.type == 'null') break;
+
+        if (nextItem.type == 'int') votersArr.push(`${nextItem.value}`);
+
+        if (votersTuple.items.length <= 1) break;
+        if (votersTuple.items[1].type != 'tuple') break;
+        votersTuple = votersTuple.items[1];
+    }
+
+    return votersArr;
+}
 
 export async function listProposals(client4: TonClient4, block: number) {
     
@@ -68,11 +88,14 @@ export async function listProposals(client4: TonClient4, block: number) {
 
     for (const r of res.result) {
 
-        //@ts-ignore
+        if (!('items' in r)) continue;
+        
         for (const l of r.items) {
-            if (l.type != 'tuple') continue;
+            if (!('items' in l)) continue;
 
+            // @ts-ignore
             let phash = l.items[0].value;
+            // @ts-ignore
             let unpacked_proposal = l.items[1].items;
 
             let expires = unpacked_proposal[0].value;
@@ -83,9 +106,8 @@ export async function listProposals(client4: TonClient4, block: number) {
             let param_hash = unpacked_proposal[2].items[2].value;
 
             let vset_id = unpacked_proposal[3].value;
-            console.log('unpacked_proposal[4]: ', unpacked_proposal[4]);
-
-            let voters_list = unpacked_proposal[4];
+            
+            let voters_list = votersTupleToArr(unpacked_proposal[4]);
 
             let weight_remaining = unpacked_proposal[5].value;
             let rounds_remaining = unpacked_proposal[6].value;
@@ -112,4 +134,36 @@ export async function listProposals(client4: TonClient4, block: number) {
     }
     
     return proposals;    
+}
+
+export async function proposalResults(client4: TonClient4, block: number, phash: string) {
+
+    let config34 = await getConfig34(client4, block);
+    let proposals = await listProposals(client4, block);
+    
+    if (phash in proposals) {
+        return {...proposals[phash], ...config34}
+    }
+
+    if (!config34) return {};
+
+    let prevCycleLastBlock = await client4.getBlockByUtime(config34.utime_since)
+    console.log({prevCycleLastBlock});    
+    console.log(prevCycleLastBlock.shards);
+
+    const prevCycleProposals = await listProposals(client4, prevCycleLastBlock.shards[0].seqno - 1);
+
+    let config11 = await getConfig11(client4, block);
+    
+    //@ts-ignore
+    if (phash in prevCycleProposals && prevCycleLastBlock[phash].losses == config11?.max_losses! - 1) {
+        proposals[phash].losses += 1;
+    } else {
+        console.log(proposals);
+        
+        // proposals[phash].wins += 1;
+    }
+    
+    return proposals[phash]
+
 }
