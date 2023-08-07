@@ -67,6 +67,7 @@ export enum VotingPowerStrategyType {
     TonBalance_1Wallet1Vote = 3, 
     JettonBalance_1Wallet1Vote = 4, 
     NftCcollection_1Wallet1Vote = 5, 
+    ValidatorsVote = 6
 };
 
 /*
@@ -76,8 +77,8 @@ examples:
 */
 
 export interface VotingPowerStrategyArg {
-    name: 'nft-address' | 'jetton-address', 
-    value: string
+    name: 'nft-address' | 'jetton-address' | 'validators-proposal-hash';
+    value: string;
 }
 
 export interface VotingPowerStrategy {
