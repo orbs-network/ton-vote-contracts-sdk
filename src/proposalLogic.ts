@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
 import { Transaction } from 'ton-core';
-import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData, VotingPowerStrategy, VotingPowerStrategyType } from "./interfaces";
+import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData, VotingPowerStrategy, VotingPowerStrategyType, VotingSystem } from "./interfaces";
 import {addressStringToTupleItem, cellToAddress, chooseRandomKeys, intToTupleItem, sleep } from "./helpers";
 
 
@@ -128,20 +128,12 @@ export function getAllVotes(transactions: Transaction[], proposalMetadata: Propo
     )
       continue;
 
-    vote = vote.toLowerCase();
     allVotes[txSrc] = {
       timestamp: transactions[i].now,
-      vote: "",
+      vote: vote.toLowerCase(),
       hash: transactions[i].prevTransactionHash.toString()
     };
 
-    if (["y", "yes"].includes(vote)) {
-      allVotes[txSrc].vote = "Yes";
-    } else if (["n", "no"].includes(vote)) {
-      allVotes[txSrc].vote = "No";
-    } else if (["a", "abstain"].includes(vote)) {
-      allVotes[txSrc].vote = "Abstain";
-    }
   }
 
   return allVotes;
@@ -472,57 +464,54 @@ export async function getVotingPower(
   return votingPower;
 }
 
-export function calcProposalResult(votes: Votes, votingPower: VotingPower): ProposalResult {
-  let sumVotes = {
-    yes: new BigNumber(0),
-    no: new BigNumber(0),
-    abstain: new BigNumber(0),
-  };
+export function calcProposalResult(votes: Votes, votingPower: VotingPower, votingSystem: VotingSystem): ProposalResult {
 
-  for (const [voter, vote] of Object.entries(votes)) {
-    if (!(voter in votingPower))
-      throw new Error(`voter ${voter} not found in votingPower`);
+  let sumVotes: Record<string, BigNumber> = {};
 
-      const _vote = vote.vote; 
-    if (_vote === "Yes") {
-      sumVotes.yes = new BigNumber(votingPower[voter]).plus(sumVotes.yes);
-    } else if (_vote === "No") {
-      sumVotes.no = new BigNumber(votingPower[voter]).plus(sumVotes.no);
-    } else if (_vote === "Abstain") {
-      sumVotes.abstain = new BigNumber(votingPower[voter]).plus(
-        sumVotes.abstain
-      );
-    }
+  for (const choice of votingSystem.choices) {
+      sumVotes[choice] = new BigNumber(0);
   }
 
-  const totalWeights = sumVotes.yes.plus(sumVotes.no).plus(sumVotes.abstain);
-  const yesPct = sumVotes.yes
-    .div(totalWeights)
-    .decimalPlaces(4)
-    .multipliedBy(100)
-    .toNumber();
-  const noPct = sumVotes.no
-    .div(totalWeights)
-    .decimalPlaces(4)
-    .multipliedBy(100)
-    .toNumber();
-  const abstainPct = sumVotes.abstain
-    .div(totalWeights)
-    .decimalPlaces(4)
-    .multipliedBy(100)
-    .toNumber();
+  for (const [voter, vote] of Object.entries(votes)) {
+    if (!(voter in votingPower)) {
+      console.log(`voter ${voter} not found in votingPower`);
+      continue;
+    }
 
-    return {
-    yes: yesPct,
-    no: noPct,
-    abstain: abstainPct,
-    totalWeight: totalWeights.toString(),
-  };
+      const _vote = vote.vote;
+      
+      if (!votingSystem.choices.includes(_vote)) {
+        console.log(`vote ${_vote} from voter at address ${voter} was not found in list of choices ${votingSystem.choices}`);
+        continue;
+      }
+
+      sumVotes[_vote] = new BigNumber(votingPower[voter]).plus(sumVotes[_vote]);
+  }
+
+  const totalWeights = votingSystem.choices.reduce((total, choice) => {
+    return total.plus(sumVotes[choice] || new BigNumber(0));
+  }, new BigNumber(0));
+
+  const proposalResult: ProposalResult = {};
+
+  for (const choice of votingSystem.choices) {
+      const choicePct = sumVotes[choice]
+          .div(totalWeights)
+          .decimalPlaces(4)
+          .multipliedBy(100)
+          .toNumber();
+  
+      proposalResult[choice] = choicePct;
+  }
+  
+  proposalResult.totalWeights = totalWeights.toString();
+  return proposalResult;
+
 }
 
 export function getCurrentResults(transactions: Transaction[], votingPower: VotingPower, proposalMetadata: ProposalMetadata): ProposalResult {
   let votes = getAllVotes(transactions, proposalMetadata);
-  return calcProposalResult(votes, votingPower);
+  return calcProposalResult(votes, votingPower, proposalMetadata.votingSystem);
 }
 
 

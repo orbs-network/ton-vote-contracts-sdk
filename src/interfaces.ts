@@ -135,8 +135,5 @@ export interface VotingPower {
 }
 
 export interface ProposalResult {
-    yes: number,
-    no: number,
-    abstain: number,
-    totalWeight: string
+    [choice: string]: number | string;
 }

@@ -178,14 +178,17 @@ export async function proposalResults(client4: TonClient4, phash: string, block:
 
     let proposal = await findLastNonEmptyProposalsInRange(client4, block, config34.utime_until - config34.utime_since, phash);
 
+    // proposal was not submitted yet
     if (!Object.keys(proposal).length) {
         return {}
     }
 
+    // proposal is still ongoing
     if (proposal.block == block) {
-        return {...proposal, config34} // still ongoing
+        return {...proposal, config34}
     }
 
+    // proposal ended
     // we didn't find the proposal on the given block, two scenarios are possible:
     // 1. proposal passed and deleted (after validator submitted the last vote)
     // 2. proposal did not pass and deleted (random ticktok)
@@ -210,5 +213,5 @@ export async function proposalResults(client4: TonClient4, phash: string, block:
         proposal.wins += 1n;
     }
 
-    return proposal;
+    return {...proposal, config34}
 }
