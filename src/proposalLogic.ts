@@ -467,34 +467,35 @@ export async function getVotingPower(
 export function calcProposalResult(votes: Votes, votingPower: VotingPower, votingSystem: VotingSystem): ProposalResult {
 
   let sumVotes: Record<string, BigNumber> = {};
+  const lowerCaseChoices = votingSystem.choices.map(choice => choice.toLowerCase());
 
-  for (const choice of votingSystem.choices) {
+  for (const choice of lowerCaseChoices) {
       sumVotes[choice] = new BigNumber(0);
   }
 
-  for (const [voter, vote] of Object.entries(votes)) {
+  for (let [voter, vote] of Object.entries(votes)) {
     if (!(voter in votingPower)) {
       console.log(`voter ${voter} not found in votingPower`);
       continue;
     }
 
-      const _vote = vote.vote;
+      const _vote = vote.vote.toLocaleLowerCase();
       
-      if (!votingSystem.choices.includes(_vote)) {
-        console.log(`vote ${_vote} from voter at address ${voter} was not found in list of choices ${votingSystem.choices}`);
+      if (!lowerCaseChoices.includes(_vote)) {
+        console.log(`vote ${_vote} from voter at address ${voter} was not found in list of choices ${lowerCaseChoices}`);
         continue;
       }
 
       sumVotes[_vote] = new BigNumber(votingPower[voter]).plus(sumVotes[_vote]);
   }
 
-  const totalWeights = votingSystem.choices.reduce((total, choice) => {
+  const totalWeights = lowerCaseChoices.reduce((total, choice) => {
     return total.plus(sumVotes[choice] || new BigNumber(0));
   }, new BigNumber(0));
 
   const proposalResult: ProposalResult = {};
 
-  for (const choice of votingSystem.choices) {
+  for (const choice of lowerCaseChoices) {
       const choicePct = sumVotes[choice]
           .div(totalWeights)
           .decimalPlaces(4)
