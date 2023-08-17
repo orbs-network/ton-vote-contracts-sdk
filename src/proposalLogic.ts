@@ -546,3 +546,40 @@ export async function chooseRandomVoters(client4: TonClient4, voters: Votes, m: 
 
 }
 
+export async function extractValidatorsVotingPower(nominators: string[], retries: number = 3) {
+    let validatorsVotingPower: { [key: string]: number } = {};
+    const apiUrl = 'https://single-nominator-backend.herokuapp.com/validator/';
+
+    for (let i = 0; i < nominators.length; i++) {
+        const fullUrl = apiUrl + nominators[i];
+
+        for (let retry = 0; retry <= retries; retry++) {
+            try {
+                const response = await fetch(fullUrl);
+
+                if (!response.ok) {
+                    console.error(`HTTP error! Status: ${response.status}`);
+                    continue;
+                }
+
+                let responseJson = await response.json();
+
+                if (!(responseJson.validator in validatorsVotingPower)) {
+                    validatorsVotingPower[responseJson.validator] = 0;
+                }
+
+                validatorsVotingPower[responseJson.validator] += responseJson.total;
+                break; // Break out of retry loop on success
+
+            } catch (error) {
+                console.error(`Error for ${nominators[i]}:`, error);
+                if (retry === retries) {
+                    console.error(`Retries exhausted for ${nominators[i]}`);
+                }
+            }
+        }
+    }
+
+    return validatorsVotingPower;
+}
+
