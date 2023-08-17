@@ -337,7 +337,7 @@ export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, c
 
 export async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategyType, allNftItemsHolders: { [key: string]: string[] }): Promise<string> {
 
-  if (strategy == VotingPowerStrategyType.TonBalance) {
+  if (strategy == VotingPowerStrategyType.TonBalance ||  strategy == VotingPowerStrategyType.TonBalanceWithValidators) {
     return (
       await clientV4.getAccountLite(
         proposalMetadata.mcSnapshotBlock,

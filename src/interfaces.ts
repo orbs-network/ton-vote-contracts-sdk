@@ -67,7 +67,8 @@ export enum VotingPowerStrategyType {
     TonBalance_1Wallet1Vote = 3, 
     JettonBalance_1Wallet1Vote = 4, 
     NftCcollection_1Wallet1Vote = 5, 
-    ValidatorsVote = 6
+    ValidatorsVote = 6,
+    TonBalanceWithValidators = 7,
 };
 
 /*
