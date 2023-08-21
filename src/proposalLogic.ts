@@ -335,91 +335,97 @@ export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, c
   return allNftItemsHolders;
 }
 
-export async function getSingleVoterPower(clientV4: TonClient4, voter: string, proposalMetadata: ProposalMetadata, strategy: VotingPowerStrategyType, allNftItemsHolders: { [key: string]: string[] }): Promise<string> {
-
-  if (strategy == VotingPowerStrategyType.TonBalance ||  strategy == VotingPowerStrategyType.TonBalanceWithValidators) {
-    return (
-      await clientV4.getAccountLite(
-        proposalMetadata.mcSnapshotBlock,
-        Address.parse(voter)
-      )
-    ).account.balance.coins;
-  }
-
-  else if (strategy == VotingPowerStrategyType.TonBalance_1Wallet1Vote) {
-    return '1';
-  }
-
-  else if (strategy == VotingPowerStrategyType.JettonBalance) {
-
-    try {
-
-      const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, 'jetton-address');
-
-      if (!jettonAddress) return '0';
-
-      let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(jettonAddress!), 'get_wallet_address', addressStringToTupleItem(voter));
-      
-      if (res.result[0].type != 'slice') {
-          return '0';
-      }
-      
-      const jettonWalletAddress = cellToAddress(res.result[0].cell);
-
-      res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, jettonWalletAddress, 'get_wallet_data');
-          
-      if (res.result[0].type != 'int') {
-          return '0';
-      }
-          
-      return res.result[0].value.toString();
-
-    } catch {
-
-      return '0';
-    }
-
-  }
-
-  else if (strategy == VotingPowerStrategyType.JettonBalance_1Wallet1Vote) {
+export async function getSingleVoterPower(
+  clientV4: TonClient4,
+  voter: string,
+  proposalMetadata: ProposalMetadata,
+  strategy: VotingPowerStrategyType,
+  allNftItemsHolders: { [key: string]: string[] },
+  operatingValidatorBalance: {[key: string]: any} = {}
+): Promise<string> {
+  
+  switch (strategy) {
     
-    try {
+    case VotingPowerStrategyType.TonBalance:
+      return (
+        await clientV4.getAccountLite(
+          proposalMetadata.mcSnapshotBlock,
+          Address.parse(voter)
+        )
+      ).account.balance.coins;
 
-      const jettonAddress = extractValueFromStrategy(proposalMetadata.votingPowerStrategies, 'jetton-address');
-      if (!jettonAddress) return '0';
-      let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(jettonAddress!), 'get_wallet_address', addressStringToTupleItem(voter));
-      
-      if (res.result[0].type != 'slice') {
-          return '0';
+    case VotingPowerStrategyType.TonBalanceWithValidators:
+      let validatorStakingBalance = 0;
+      // if the voter is the controller of the validator staking address we add the staking validator balance 
+      // to the total weight
+      if (voter in operatingValidatorBalance) {
+        validatorStakingBalance = operatingValidatorBalance[voter].total;
       }
-      
-      const jettonWalletAddress = cellToAddress(res.result[0].cell);
 
-      res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, jettonWalletAddress, 'get_wallet_data');
-          
-      if (res.result[0].type != 'int') {
+      // the final voting power will be the operating validator wallet + staking validator wallet
+      return (
+        await clientV4.getAccountLite(
+          proposalMetadata.mcSnapshotBlock,
+          Address.parse(voter)
+        )
+      ).account.balance.coins + validatorStakingBalance;
+        
+    case VotingPowerStrategyType.TonBalance_1Wallet1Vote:
+      return '1';
+    
+    case VotingPowerStrategyType.JettonBalance:
+    case VotingPowerStrategyType.JettonBalance_1Wallet1Vote: {
+    
+      try {
+        const jettonAddress = extractValueFromStrategy(
+          proposalMetadata.votingPowerStrategies,
+          'jetton-address'
+        );
+
+        if (!jettonAddress) return '0';
+
+        let res = await clientV4.runMethod(
+          proposalMetadata.mcSnapshotBlock,
+          Address.parse(jettonAddress!),
+          'get_wallet_address',
+          addressStringToTupleItem(voter)
+        );
+
+        if (res.result[0].type != 'slice') {
           return '0';
+        }
+
+        const jettonWalletAddress = cellToAddress(res.result[0].cell);
+
+        res = await clientV4.runMethod(
+          proposalMetadata.mcSnapshotBlock,
+          jettonWalletAddress,
+          'get_wallet_data'
+        );
+
+        if (res.result[0].type != 'int') {
+          return '0';
+        }
+
+        if (strategy === VotingPowerStrategyType.JettonBalance) {
+          return res.result[0].value.toString();
+        } else {
+          return String(Number(res.result[0].value > 0));
+        }
+      } catch {
+        return '0';
       }
-          
-      return String(Number(res.result[0].value > 0));
-
-    } catch {
-
-      return '0';
     }
-
+    
+    case VotingPowerStrategyType.NftCcollection:
+      return toNano(allNftItemsHolders[voter].length).toString();
+    
+    case VotingPowerStrategyType.NftCcollection_1Wallet1Vote:
+      return voter in allNftItemsHolders ? '1' : '0';
+    
+    default:
+      return '0';
   }
-
-  else if (strategy == VotingPowerStrategyType.NftCcollection) {    
-    return (toNano(allNftItemsHolders[voter].length)).toString();
-  }
-
-  else if (strategy == VotingPowerStrategyType.NftCcollection_1Wallet1Vote) {
-    if (voter in allNftItemsHolders) return '1';
-    return '0';
-  }
-
-  return '0';
 
 }
 
@@ -429,7 +435,8 @@ export async function getVotingPower(
   transactions: Transaction[],
   votingPower: VotingPower = {},
   strategy: VotingPowerStrategyType =  VotingPowerStrategyType.TonBalance,
-  nftItemsHolders: { [key: string]: string[] } = {}
+  nftItemsHolders: { [key: string]: string[] } = {},
+  operatingValidatorBalance: {[key: string]: any} = {}
 ): Promise<VotingPower> {
   let voters = Object.keys(getAllVotes(transactions, proposalMetadata));
 
@@ -449,7 +456,7 @@ export async function getVotingPower(
     const batchVoters = newVoters.slice(startIndex, endIndex);
   
     const voterPromises = batchVoters.map((voter) =>
-      getSingleVoterPower(clientV4, voter, proposalMetadata, strategy, nftItemsHolders)
+      getSingleVoterPower(clientV4, voter, proposalMetadata, strategy, nftItemsHolders, operatingValidatorBalance)
     );
   
     const votingPowerArray = await Promise.all(voterPromises);
@@ -545,41 +552,3 @@ export async function chooseRandomVoters(client4: TonClient4, voters: Votes, m: 
   return chooseRandomKeys(lastBlock.last.rootHash, voters, m);
 
 }
-
-export async function extractValidatorsVotingPower(nominators: string[], retries: number = 3) {
-    let validatorsVotingPower: { [key: string]: number } = {};
-    const apiUrl = 'https://single-nominator-backend.herokuapp.com/validator/';
-
-    for (let i = 0; i < nominators.length; i++) {
-        const fullUrl = apiUrl + nominators[i];
-
-        for (let retry = 0; retry <= retries; retry++) {
-            try {
-                const response = await fetch(fullUrl);
-
-                if (!response.ok) {
-                    console.error(`HTTP error! Status: ${response.status}`);
-                    continue;
-                }
-
-                let responseJson = await response.json();
-
-                if (!(responseJson.validator in validatorsVotingPower)) {
-                    validatorsVotingPower[responseJson.validator] = 0;
-                }
-
-                validatorsVotingPower[responseJson.validator] += responseJson.total;
-                break; // Break out of retry loop on success
-
-            } catch (error) {
-                console.error(`Error for ${nominators[i]}:`, error);
-                if (retry === retries) {
-                    console.error(`Retries exhausted for ${nominators[i]}`);
-                }
-            }
-        }
-    }
-
-    return validatorsVotingPower;
-}
-

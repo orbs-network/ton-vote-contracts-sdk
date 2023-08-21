@@ -215,3 +215,47 @@ export async function proposalResults(client4: TonClient4, phash: string, block:
 
     return {...proposal, config34}
 }
+
+// for active validators proposals - the validator will vote from mytonctrl and we will calculate it's voting power.
+// for regular wallets the voting power it's just the total balance, for nominators the voting power of the validator is 
+// the total balance staked in the elector (represented by the validator wallet) 
+export async function extractValidatorsVotingPower(nominators: string[], retries: number = 3) {
+    let validatorsVotingPower: { [key: string]: number } = {};
+    const apiUrl = 'https://single-nominator-backend.herokuapp.com/validator/';
+
+    for (let i = 0; i < nominators.length; i++) {
+        const fullUrl = apiUrl + nominators[i];
+
+        for (let retry = 0; retry <= retries; retry++) {
+            try {
+                const response = await fetch(fullUrl);
+
+                if (!response.ok) {
+                    console.error(`HTTP error! Status: ${response.status}`);
+                    continue;
+                }
+
+                let responseJson = await response.json();
+
+                if (!(responseJson.validator in validatorsVotingPower)) {
+                    validatorsVotingPower[responseJson.validator] = 0;
+                }
+
+                validatorsVotingPower[responseJson.validator] += responseJson.total;
+                break; 
+
+            } catch (error) {
+                console.error(`Error for ${nominators[i]}:`, error);
+                if (retry === retries) {
+                    console.error(`Retries exhausted for ${nominators[i]}`);
+                }
+            }
+        }
+    }
+
+    return validatorsVotingPower;
+}
+
+// 1. fetch all validators (SNM) on block num
+// 2. run sn api on all validators (SNM) from prev step to fetch all validators address list (mytonctrl validators)
+// 3. to calc voting power - check if voter in validators list (mytonvctrl) if so it's voting power is taken from validator list o.w from get balance
