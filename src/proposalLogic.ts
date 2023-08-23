@@ -224,7 +224,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
           } catch (error) {
             attempt++;
             console.log(`attempt ${attempt} failed with error ${error} (nftAddress ${nftAddress}), retrying...`);
-            sleep(100);
+            sleep(attempt * 100);
           }
         }
       })();
@@ -344,7 +344,7 @@ export async function getSingleVoterPower(
   operatingValidatorBalance: {[key: string]: any} = {}
 ): Promise<string> {
   
-  switch (strategy) {
+  switch (Number(strategy)) {
     
     case VotingPowerStrategyType.TonBalance:
       return (
@@ -363,12 +363,12 @@ export async function getSingleVoterPower(
       }
 
       // the final voting power will be the operating validator wallet + staking validator wallet
-      return (
+      return BigNumber((
         await clientV4.getAccountLite(
           proposalMetadata.mcSnapshotBlock,
           Address.parse(voter)
         )
-      ).account.balance.coins + validatorStakingBalance;
+      ).account.balance.coins).plus(validatorStakingBalance).toString();
         
     case VotingPowerStrategyType.TonBalance_1Wallet1Vote:
       return '1';
