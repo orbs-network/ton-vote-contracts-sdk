@@ -355,11 +355,11 @@ export async function getSingleVoterPower(
       ).account.balance.coins;
 
     case VotingPowerStrategyType.TonBalanceWithValidators:
-      let validatorStakingBalance = 0;
+      let validatorStakingBalance = '0';
       // if the voter is the controller of the validator staking address we add the staking validator balance 
       // to the total weight
       if (voter in operatingValidatorBalance) {
-        validatorStakingBalance = operatingValidatorBalance[voter].total;
+        validatorStakingBalance = toNano(operatingValidatorBalance[voter].total).toString();
       }
 
       // the final voting power will be the operating validator wallet + staking validator wallet
