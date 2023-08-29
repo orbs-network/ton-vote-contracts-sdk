@@ -115,7 +115,7 @@ export async function listProposal(client4: TonClient4, block: number, phash: st
 
             let wins = unpacked_proposal[7].value;
             let losses = unpacked_proposal[8].value;
-
+            
             proposal = {
                 block,
                 expires,
@@ -137,6 +137,9 @@ export async function listProposal(client4: TonClient4, block: number, phash: st
     return proposal;    
 }
 
+// if the proposal ended (passed/failed) it will be deleted and we will not be able to query any getter for additional info
+// so we will search it in a given 'range' of blocks. 'block' is the end block and will search for the first non empty block 
+// which contains phash up until 'block' - 'range'
 async function findLastNonEmptyProposalsInRange(client4: TonClient4, block: number, range: number, phash: string): Promise<any> {
     let proposal = await listProposal(client4, block, phash);
 
@@ -255,7 +258,3 @@ export async function extractValidatorsVotingPower(nominators: string[], retries
 
     return validatorsVotingPower;
 }
-
-// 1. fetch all validators (SNM) on block num
-// 2. run sn api on all validators (SNM) from prev step to fetch all validators address list (mytonctrl validators)
-// 3. to calc voting power - check if voter in validators list (mytonvctrl) if so it's voting power is taken from validator list o.w from get balance
