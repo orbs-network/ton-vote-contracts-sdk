@@ -72,10 +72,9 @@ export async function getTransactions(
       } catch (error) {
         attempt++;
         console.log(`Attempt ${attempt} failed with error ${error}, retrying...`);
-
-        // Don't forget to add your sleep function here if you need some delay in retries!
-        // await sleep(attempt * 100);
+        await sleep(attempt * 100);
       }
+      
     }
     if (!success) {
         throw new Error(`Max retries reached for requesting transactions.`);
