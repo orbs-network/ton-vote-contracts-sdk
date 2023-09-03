@@ -33,6 +33,7 @@ export async function getTransactions(
   contractAddress: string,
   toLt?: string
 ): Promise<TxData> {
+  const maxRetries = 5;
 
   let maxLt = new BigNumber(toLt ?? -1);
   let startPage = { fromLt: "0", hash: "" };
@@ -40,30 +41,45 @@ export async function getTransactions(
   let paging = startPage;
   const limit = 500;
 
-  while (true) {
-    console.log("Querying...");
-    const txns = await client.getTransactions(Address.parse(contractAddress), {
-      lt: paging.fromLt,
-      to_lt: toLt,
-      hash: paging.hash,
-      limit: limit,
-    });  
+  outerLoop: while (true) {
+    let attempt = 0;
+    let success = false;
 
-    console.log(`Got ${txns.length}, lt ${paging.fromLt}`);
-    // console.log(txns);
-    
-    allTxns = [...allTxns, ...txns];
+    while (!success && attempt < maxRetries) {
+      try {
+        console.log("Querying...");
+        const txns = await client.getTransactions(Address.parse(contractAddress), {
+          lt: paging.fromLt,
+          to_lt: toLt,
+          hash: paging.hash,
+          limit: limit,
+        });
 
-    txns.forEach((t) => {
-      maxLt = BigNumber.max(new BigNumber(t.lt.toString()), maxLt);
-    });
+        console.log(`Got ${txns.length}, lt ${paging.fromLt}`);
+        allTxns = [...allTxns, ...txns];
 
-    if (txns.length == 0 || txns.length < limit) break;
+        txns.forEach((t) => {
+          maxLt = BigNumber.max(new BigNumber(t.lt.toString()), maxLt);
+        });
 
-    paging.fromLt = (txns[txns.length - 2].prevTransactionLt).toString();
-    paging.hash = bigintToBase64(txns[txns.length - 2].prevTransactionHash);
+        if (txns.length == 0 || txns.length < limit) break outerLoop;
 
-    // console.log('new paging: ', paging);        
+        paging.fromLt = (txns[txns.length - 2].prevTransactionLt).toString();
+        paging.hash = bigintToBase64(txns[txns.length - 2].prevTransactionHash);
+
+        success = true;
+
+      } catch (error) {
+        attempt++;
+        console.log(`Attempt ${attempt} failed with error ${error}, retrying...`);
+
+        // Don't forget to add your sleep function here if you need some delay in retries!
+        // await sleep(attempt * 100);
+      }
+    }
+    if (!success) {
+        throw new Error(`Max retries reached for requesting transactions.`);
+    }
   }
 
   return { allTxns, maxLt: maxLt.toString() };

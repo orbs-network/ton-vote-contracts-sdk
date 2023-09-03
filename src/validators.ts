@@ -115,7 +115,7 @@ export async function listProposal(client4: TonClient4, block: number, phash: st
 
             let wins = unpacked_proposal[7].value;
             let losses = unpacked_proposal[8].value;
-            
+              
             proposal = {
                 block,
                 expires,
@@ -172,14 +172,22 @@ async function findLastNonEmptyProposalsInRange(client4: TonClient4, block: numb
     return {};
 }
 
-export async function proposalResults(client4: TonClient4, phash: string, block: number = -1) {
+// will fetch and calc config proposal results for phash. config proposals are proposals which created on the config contract on the network and validators usually vote on this proposals from mytonctrl.
+// this function supports pending, ongoing and ended proposals.
+// if block num is not provided will search for proposals starting from the last block so proposals which ended more than 18 hours before last block will not be found.
+// in this case the user should provide the approx block which the proposal ended. 
+// another less optimal option is to provide a big range for the search, we use here a binary search to find the proposal with queries to the network so this will take more time and not recommended.
+// if the proposal was not found or not begun yet, the function will return an empty object.
+export async function proposalResults(client4: TonClient4, phash: string, block: number = -1, range: number = -1) {
 
     if (block == -1) block = (await client4.getLastBlock()).last.seqno;
 
     let config34 = await getConfig34(client4, block);
     if (!config34) return {};
 
-    let proposal = await findLastNonEmptyProposalsInRange(client4, block, config34.utime_until - config34.utime_since, phash);
+    if (range == -1) range = config34.utime_until - config34.utime_since;
+
+    let proposal = await findLastNonEmptyProposalsInRange(client4, block, range, phash);
 
     // proposal was not submitted yet
     if (!Object.keys(proposal).length) {
