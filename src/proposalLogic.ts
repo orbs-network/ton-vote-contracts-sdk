@@ -224,7 +224,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
           } catch (error) {
             attempt++;
             console.log(`attempt ${attempt} failed with error ${error} (nftAddress ${nftAddress}), retrying...`);
-            sleep(attempt * 100);
+            await sleep(attempt * 100);
           }
         }
       })();
@@ -418,7 +418,7 @@ export async function getSingleVoterPower(
     }
     
     case VotingPowerStrategyType.NftCcollection:
-      return toNano(allNftItemsHolders[voter].length).toString();
+      return toNano(voter in allNftItemsHolders? allNftItemsHolders[voter].length: 0).toString();
     
     case VotingPowerStrategyType.NftCcollection_1Wallet1Vote:
       return voter in allNftItemsHolders ? '1' : '0';
