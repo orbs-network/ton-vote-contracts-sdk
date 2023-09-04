@@ -46,6 +46,17 @@ export function sleep(time: number) {
   });
 }
 
+export function randomSleep(maxInterval: number) {
+  console.log(`random sleep maxinterval: ${maxInterval}`);
+  
+  let time = (1 + Math.random() * (maxInterval-1))
+  return new Promise((resolve) => {
+    console.log(`💤 ${time / 1000}s ...`);
+
+    setTimeout(resolve, time);
+  });
+}
+
 export async function initWallet(client: TonClient, publicKey: Buffer, workchain = 0): Promise<OpenedContract<WalletContractV3R2>> {
   const wallet = client.open(WalletContractV3R2.create({ publicKey: publicKey, workchain }));
 

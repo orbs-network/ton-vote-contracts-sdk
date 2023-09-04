@@ -5,7 +5,7 @@ import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
 import { Transaction } from 'ton-core';
 import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData, VotingPowerStrategy, VotingPowerStrategyType, VotingSystem } from "./interfaces";
-import {addressStringToTupleItem, cellToAddress, chooseRandomKeys, intToTupleItem, sleep } from "./helpers";
+import {addressStringToTupleItem, cellToAddress, chooseRandomKeys, intToTupleItem, randomSleep, sleep } from "./helpers";
 
 
 // import * as fs from 'fs';
@@ -72,9 +72,9 @@ export async function getTransactions(
       } catch (error) {
         attempt++;
         console.log(`Attempt ${attempt} failed with error ${error}, retrying...`);
-        await sleep(attempt * 100);
+        await randomSleep(attempt * 2000);
       }
-      
+
     }
     if (!success) {
         throw new Error(`Max retries reached for requesting transactions.`);
