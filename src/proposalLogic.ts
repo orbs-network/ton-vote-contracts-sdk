@@ -505,7 +505,7 @@ export function calcProposalResult(votes: Votes, votingPower: VotingPower, votin
       const _vote = vote.vote.toLocaleLowerCase();
       
       if (!lowerCaseChoices.includes(_vote)) {
-        console.log(`vote ${_vote} from voter at address ${voter} was not found in list of choices ${lowerCaseChoices}`);
+        console.log(`vote ${_vote} from voter at address ${voter} was not found in list of choices ${lowerCaseChoices}, ignoring vote...`);
         continue;
       }
 
@@ -521,8 +521,8 @@ export function calcProposalResult(votes: Votes, votingPower: VotingPower, votin
   for (const choice of lowerCaseChoices) {
       const choicePct = sumVotes[choice]
           .div(totalWeights)
-          .decimalPlaces(4)
           .multipliedBy(100)
+          .decimalPlaces(4)
           .toNumber();
   
       proposalResult[choice] = choicePct;
