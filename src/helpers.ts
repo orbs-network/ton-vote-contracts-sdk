@@ -46,7 +46,7 @@ export function sleep(time: number) {
   });
 }
 
-export function randomSleep(maxInterval: number) {
+export function randomSleep(maxInterval: number = 2000) {
   console.log(`random sleep maxinterval: ${maxInterval}`);
   
   let time = (1 + Math.random() * (maxInterval-1))
@@ -201,6 +201,7 @@ export async function promiseAllWithRetry(promises: Promise<any>[], retries: num
   
     if (retries > 0) {
       console.log(`Retry attempt ${4 - retries} failed, retrying...`);
+      await randomSleep();
       await promiseAllWithRetry(promises, retries - 1);
     } else {
       console.error('All retry attempts failed.');
@@ -220,6 +221,7 @@ export async function executeMethodWithRetry<T extends {}, K extends keyof T>(in
   } catch (err) {
     if (retries > 0) {
       console.log(`Retry attempt ${4 - retries} failed, retrying...`);
+      await randomSleep();
       return await executeMethodWithRetry(instance, methodName, retries - 1);
     } else {
       console.error('All retry attempts failed.');
