@@ -72,7 +72,7 @@ export async function getTransactions(
       } catch (error) {
         attempt++;
         console.log(`Attempt ${attempt} failed with error ${error}, retrying...`);
-        await randomSleep(attempt * 2000);
+        await randomSleep((attempt-1) * 2000, 2000);
       }
 
     }
@@ -92,6 +92,7 @@ export function filterTxByTimestamp(transactions: Transaction[], lastLt: string)
   return filteredTx;
 }
 
+// TODO: filter here if comment not yes no abstain
 function extractComment(body: Cell | undefined): string | null {
 
   if (!body) return null;

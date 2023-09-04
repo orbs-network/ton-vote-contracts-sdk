@@ -46,10 +46,10 @@ export function sleep(time: number) {
   });
 }
 
-export function randomSleep(maxInterval: number = 2000) {
-  console.log(`random sleep maxinterval: ${maxInterval}`);
+export function randomSleep(lowRange: number = 0, highRange: number = 2000) {
+  console.log(`random sleep lowRange: ${lowRange}, lowRange: ${lowRange}`);
   
-  let time = (1 + Math.random() * (maxInterval-1))
+  let time = (1 + Math.random() * (lowRange + highRange - 1))
   return new Promise((resolve) => {
     console.log(`💤 ${time / 1000}s ...`);
 
@@ -192,7 +192,9 @@ export function storeComment(msg: string) {
   };
 }
 
-export async function promiseAllWithRetry(promises: Promise<any>[], retries: number = 3): Promise<any> {
+export async function promiseAllWithRetry(promises: Promise<any>[], maxRetries: number = 10): Promise<any> {
+
+  let retries = maxRetries;
 
   try {
     return await Promise.all(promises);
@@ -200,8 +202,8 @@ export async function promiseAllWithRetry(promises: Promise<any>[], retries: num
   } catch (err) {
   
     if (retries > 0) {
-      console.log(`Retry attempt ${4 - retries} failed, retrying...`);
-      await randomSleep();
+      console.log(`Retry attempt ${maxRetries - retries + 1} failed, retrying...`);
+      await randomSleep((maxRetries - retries) * 2000, 2000);
       await promiseAllWithRetry(promises, retries - 1);
     } else {
       console.error('All retry attempts failed.');
@@ -211,7 +213,10 @@ export async function promiseAllWithRetry(promises: Promise<any>[], retries: num
   }
 }
 
-export async function executeMethodWithRetry<T extends {}, K extends keyof T>(instance: T, methodName: K, retries: number = 3): Promise<any> {
+export async function executeMethodWithRetry<T extends {}, K extends keyof T>(instance: T, methodName: K, maxRetries: number = 10): Promise<any> {
+
+  let retries = maxRetries;
+
   try {
     if (methodName in instance && typeof instance[methodName] === 'function') {
       return await (instance[methodName] as any)();
@@ -220,8 +225,8 @@ export async function executeMethodWithRetry<T extends {}, K extends keyof T>(in
     }
   } catch (err) {
     if (retries > 0) {
-      console.log(`Retry attempt ${4 - retries} failed, retrying...`);
-      await randomSleep();
+      console.log(`Retry attempt ${maxRetries - retries + 1} failed, retrying...`);
+      await randomSleep((maxRetries - retries) * 2000, 2000);
       return await executeMethodWithRetry(instance, methodName, retries - 1);
     } else {
       console.error('All retry attempts failed.');
