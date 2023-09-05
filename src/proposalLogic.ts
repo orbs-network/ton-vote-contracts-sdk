@@ -72,7 +72,8 @@ export async function getTransactions(
       } catch (error) {
         attempt++;
         console.log(`Attempt ${attempt} failed with error ${error}, retrying...`);
-        await randomSleep((attempt-1) * 2000, 2000);
+        let minSleepTime = (attempt-1) * 2000; 
+        await randomSleep(minSleepTime, minSleepTime + 2000);
       }
 
     }

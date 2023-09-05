@@ -46,10 +46,11 @@ export function sleep(time: number) {
   });
 }
 
-export function randomSleep(lowRange: number = 0, highRange: number = 2000) {
-  console.log(`random sleep lowRange: ${lowRange}, lowRange: ${lowRange}`);
+export function randomSleep(minSleepTime: number = 0, maxSleepTime: number = 2000) {
+  console.log(`random sleep minSleepTime: ${minSleepTime}, maxSleepTime: ${maxSleepTime}`);
   
-  let time = (1 + Math.random() * (lowRange + highRange - 1))
+  let time = minSleepTime + Math.random() * (maxSleepTime - minSleepTime);
+
   return new Promise((resolve) => {
     console.log(`💤 ${time / 1000}s ...`);
 
@@ -203,7 +204,8 @@ export async function promiseAllWithRetry(promises: Promise<any>[], maxRetries: 
   
     if (retries > 0) {
       console.log(`Retry attempt ${maxRetries - retries + 1} failed, retrying...`);
-      await randomSleep((maxRetries - retries) * 2000, 2000);
+      let minSleepTime = (maxRetries - retries) * 2000; 
+      await randomSleep(minSleepTime, minSleepTime + 2000);
       await promiseAllWithRetry(promises, retries - 1);
     } else {
       console.error('All retry attempts failed.');
@@ -226,7 +228,8 @@ export async function executeMethodWithRetry<T extends {}, K extends keyof T>(in
   } catch (err) {
     if (retries > 0) {
       console.log(`Retry attempt ${maxRetries - retries + 1} failed, retrying...`);
-      await randomSleep((maxRetries - retries) * 2000, 2000);
+      let minSleepTime = (maxRetries - retries) * 2000; 
+      await randomSleep(minSleepTime, minSleepTime + 2000);
       return await executeMethodWithRetry(instance, methodName, retries - 1);
     } else {
       console.error('All retry attempts failed.');
