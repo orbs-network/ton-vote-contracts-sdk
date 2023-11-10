@@ -1,4 +1,4 @@
-import { getHttpEndpoint } from "@orbs-network/ton-access";
+import { getHttpEndpoint, getHttpV4Endpoint } from "@orbs-network/ton-access";
 import { Address, TonClient, TonClient4, Cell, toNano } from "ton";
 import BigNumber from "bignumber.js";
 import { CUSTODIAN_ADDRESSES } from "./custodian";
@@ -24,7 +24,14 @@ export async function getClientV2(customEndpoint?: string, apiKey?: string): Pro
 }
 
 export async function getClientV4(customEndpoint?: string): Promise<TonClient4> {
-  const endpoint = customEndpoint || "https://mainnet-v4.tonhubapi.com";
+  // const endpoint = customEndpoint || "https://mainnet-v4.tonhubapi.com";
+
+  if (customEndpoint) {
+    return new TonClient4({ endpoint: customEndpoint, timeout: 15000 });
+  }
+
+  const endpoint = await getHttpV4Endpoint();
+
   return new TonClient4({ endpoint, timeout: 15000 });
 }
 
