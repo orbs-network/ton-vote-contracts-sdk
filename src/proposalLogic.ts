@@ -186,7 +186,7 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
 
   const nextItemIndex = Number(res.result[0].value);
 
-  const batchSize = 100;
+  const batchSize = 25;
   const batches = Math.ceil(nextItemIndex / batchSize);
   
   if (batches > 500) {
