@@ -430,8 +430,8 @@ export async function getSingleVoterPower(
         if (res.result[0].type != 'int') {
           return '0';
         }
-
-        if (strategy === VotingPowerStrategyType.JettonBalance) {
+        
+        if (Number(strategy) === VotingPowerStrategyType.JettonBalance) {
           return res.result[0].value.toString();
         } else {
           return String(Number(res.result[0].value > 0));
