@@ -10,7 +10,7 @@ import { TonClient, WalletContractV3R2, fromNano, beginCell, TupleItem , TupleBu
 import fs from "fs";
 import {execSync} from "child_process";
 import seedrandom from 'seedrandom';
-import BN from "bn.js";
+import BigNumber from "bignumber.js";
 
 enum JETTON_OPS {
   ChangeAdmin = 3,
@@ -283,6 +283,6 @@ export function _transferNft(to: Address) {
 }
 
 export function convertToNano(value: string, decimals: number): string {
-  const nanoValue = new BN(value).mul(new BN(10).pow(new BN(9 - decimals)));
+  const nanoValue = new BigNumber(value).multipliedBy(new BigNumber(10).pow(new BigNumber(9 - decimals)));
   return nanoValue.toString();
 }
