@@ -5,7 +5,7 @@ import { CUSTODIAN_ADDRESSES } from "./custodian";
 import _ from "lodash";
 import { Transaction } from 'ton-core';
 import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData, VotingPowerStrategy, VotingPowerStrategyType, VotingSystem } from "./interfaces";
-import {addressStringToTupleItem, cellToAddress, chooseRandomKeys, intToTupleItem, randomSleep, sleep } from "./helpers";
+import {addressStringToTupleItem, cellToAddress, chooseRandomKeys, convertToNano, intToTupleItem, randomSleep, sleep } from "./helpers";
 
 
 // import * as fs from 'fs';
@@ -432,7 +432,9 @@ export async function getSingleVoterPower(
         }
         
         if (Number(strategy) === VotingPowerStrategyType.JettonBalance) {
-          return res.result[0].value.toString();
+          const decimals = proposalMetadata.jettonMetadata?.metadata?.decimals || 9;        
+          return convertToNano(res.result[0].value.toString(), decimals);
+
         } else {
           return String(Number(res.result[0].value > 0));
         }

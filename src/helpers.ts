@@ -281,3 +281,8 @@ export function _transferNft(to: Address) {
     .storeBit(false) // forward_payload in this slice, not separate cell
     .endCell();
 }
+
+export function convertToNano(value: string, decimals: number): string {
+  const nanoValue = new BN(value).mul(new BN(10).pow(new BN(9 - decimals)));
+  return nanoValue.toString();
+}
