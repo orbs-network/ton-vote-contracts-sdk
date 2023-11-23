@@ -163,6 +163,42 @@ export function getAllVotes(transactions: Transaction[], proposalMetadata: Propo
   return allVotes;
 }
 
+export async function getJettonBalance(clientV4: TonClient4, jettonAddress: string, mcSnapshotBlock: number, voter: string, decimals: number = 9) {
+  
+  try {
+    if (!jettonAddress) return '0';
+
+    let res = await clientV4.runMethod(
+      mcSnapshotBlock,
+      Address.parse(jettonAddress!),
+      'get_wallet_address',
+      addressStringToTupleItem(voter)
+    );
+
+    if (res.result[0].type != 'slice') {
+      return '0';
+    }
+
+    const jettonWalletAddress = cellToAddress(res.result[0].cell);
+
+    res = await clientV4.runMethod(
+      mcSnapshotBlock,
+      jettonWalletAddress,
+      'get_wallet_data'
+    );
+
+    if (res.result[0].type != 'int') {
+      return '0';
+    }
+    
+    return convertToNano(res.result[0].value.toString(), decimals);
+
+  } catch {
+    return '0';
+  }
+
+}
+
 function extractValueFromStrategy(votingPowerStrategies: VotingPowerStrategy[], nameFilter: string): string | undefined {
 
   const strategy = votingPowerStrategies.find((strategy) => strategy.arguments.some((arg) => arg.name === nameFilter));
@@ -376,7 +412,11 @@ export async function getSingleVoterPower(
           proposalMetadata.mcSnapshotBlock,
           Address.parse(voter)
         )
-      ).account.balance.coins;
+      ).account.balance.coins + 
+      
+      getJettonBalance(clientV4, 'EQDNhy-nxYFgUqzfUzImBEP67JqsyMIcyk2S5_RwNNEYku0k', proposalMetadata.mcSnapshotBlock, voter) +
+      getJettonBalance(clientV4, 'EQBNo5qAG8I8J6IxGaz15SfQVB-kX98YhKV_mT36Xo5vYxUa', proposalMetadata.mcSnapshotBlock, voter);
+
 
     case VotingPowerStrategyType.TonBalanceWithValidators:
       let validatorStakingBalance = '0';

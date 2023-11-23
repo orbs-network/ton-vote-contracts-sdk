@@ -22,6 +22,7 @@ enum JETTON_OPS {
 }
 
 const NFT_TRANSFER_OP = 0x5fcc3d14;
+const MAX_RETRIES = 10;
 
 export async function waitForContractToBeDeployed(client: TonClient, deployedContract: Address) {
   const seqnoStepInterval = 2500;
@@ -193,9 +194,7 @@ export function storeComment(msg: string) {
   };
 }
 
-export async function promiseAllWithRetry(promises: Promise<any>[], maxRetries: number = 10): Promise<any> {
-
-  let retries = maxRetries;
+export async function promiseAllWithRetry(promises: Promise<any>[], retries: number = 10): Promise<any> {
 
   try {
     return await Promise.all(promises);
@@ -203,8 +202,8 @@ export async function promiseAllWithRetry(promises: Promise<any>[], maxRetries: 
   } catch (err) {
   
     if (retries > 0) {
-      console.log(`Retry attempt ${maxRetries - retries + 1} failed, retrying...`);
-      let minSleepTime = (maxRetries - retries) * 2000; 
+      console.log(`Retry attempt ${MAX_RETRIES - retries + 1} failed, retrying...`);
+      let minSleepTime = (MAX_RETRIES - retries) * 2000; 
       await randomSleep(minSleepTime, minSleepTime + 2000);
       await promiseAllWithRetry(promises, retries - 1);
     } else {
