@@ -407,16 +407,15 @@ export async function getSingleVoterPower(
   switch (Number(strategy)) {
     
     case VotingPowerStrategyType.TonBalance:
-      return (
+      return (new BigNumber((
         await clientV4.getAccountLite(
           proposalMetadata.mcSnapshotBlock,
           Address.parse(voter)
         )
-      ).account.balance.coins + 
-      
-      await getJettonBalance(clientV4, 'EQDNhy-nxYFgUqzfUzImBEP67JqsyMIcyk2S5_RwNNEYku0k', proposalMetadata.mcSnapshotBlock, voter) +
-      await getJettonBalance(clientV4, 'EQBNo5qAG8I8J6IxGaz15SfQVB-kX98YhKV_mT36Xo5vYxUa', proposalMetadata.mcSnapshotBlock, voter) + 
-      await getJettonBalance(clientV4, 'EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav', proposalMetadata.mcSnapshotBlock, voter);
+      ).account.balance.coins)
+      .plus(new BigNumber(await getJettonBalance(clientV4, 'EQDNhy-nxYFgUqzfUzImBEP67JqsyMIcyk2S5_RwNNEYku0k', proposalMetadata.mcSnapshotBlock, voter)))
+      .plus(new BigNumber(await getJettonBalance(clientV4, 'EQBNo5qAG8I8J6IxGaz15SfQVB-kX98YhKV_mT36Xo5vYxUa', proposalMetadata.mcSnapshotBlock, voter)))
+      .plus(new BigNumber(await getJettonBalance(clientV4, 'EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav', proposalMetadata.mcSnapshotBlock, voter)))).toString()
 
     case VotingPowerStrategyType.TonBalanceWithValidators:
       let validatorStakingBalance = '0';
