@@ -546,7 +546,7 @@ export async function getVotingPower(
 export function calcProposalResult(votes: Votes, votingPower: VotingPower, votingSystem: VotingSystem): ProposalResult {
 
   let sumVotes: Record<string, BigNumber> = {};
-  const lowerCaseChoices = votingSystem.choices.map(choice => choice.toLowerCase());
+  const lowerCaseChoices = votingSystem.choices.map(choice => choice.toLowerCase().substring(0, 127));
 
   for (const choice of lowerCaseChoices) {
       sumVotes[choice] = new BigNumber(0);
