@@ -61,6 +61,8 @@ export async function getDaos(client : TonClient, releaseMode: ReleaseMode, star
     let batchCount = Math.ceil((endDaoId - startId) / batchSize);
     
     for (let batchIndex = 0; batchIndex < batchCount; batchIndex++) {
+        console.log(`fetching daos, batch ${batchIndex}`);
+        
       let batchStart = startId + batchIndex * batchSize;
       let batchEnd = Math.min(startId + (batchIndex + 1) * batchSize, endDaoId);
     
