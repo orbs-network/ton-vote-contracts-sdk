@@ -205,7 +205,8 @@ export async function promiseAllWithRetry(promises: Promise<any>[], retries: num
       console.log(`Retry attempt ${MAX_RETRIES - retries + 1} failed with error ${err}`);
       let minSleepTime = (MAX_RETRIES - retries) * 2000; 
       // await randomSleep(minSleepTime, minSleepTime + 2000);
-      await sleep(2000);
+      // await sleep(2000);
+      await randomSleep(100, 2000);
       await promiseAllWithRetry(promises, retries - 1);
     } else {
       console.error('All retry attempts failed.');
@@ -228,7 +229,8 @@ export async function executeMethodWithRetry<T extends {}, K extends keyof T>(in
       console.log(`Retry attempt ${MAX_RETRIES - retries + 1} failed, retrying...`);
       let minSleepTime = (MAX_RETRIES - retries) * 2000; 
       // await randomSleep(minSleepTime, minSleepTime + 2000);
-      await sleep(2000);
+      // await sleep(2000);
+      await randomSleep(100, 2000);
       return await executeMethodWithRetry(instance, methodName, retries - 1);
     } else {
       console.error('All retry attempts failed.');

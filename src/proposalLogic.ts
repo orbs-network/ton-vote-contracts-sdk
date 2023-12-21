@@ -40,7 +40,7 @@ export async function getTransactions(
   contractAddress: string,
   toLt?: string
 ): Promise<TxData> {
-  const maxRetries = 100;
+  const maxRetries = 10;
 
   let maxLt = new BigNumber(toLt ?? -1);
   let startPage = { fromLt: "0", hash: "" };
@@ -79,9 +79,9 @@ export async function getTransactions(
       } catch (error) {
         attempt++;
         console.log(`Attempt ${attempt} failed with error ${error}, retrying...`);
-        let minSleepTime = (attempt-1) * 2000; 
-        // await randomSleep(minSleepTime, minSleepTime + 2000);
-        await sleep(2000);
+        // let minSleepTime = (attempt-1) * 2000; 
+        await randomSleep(10, 2000);
+        // await sleep(2000);
       }
 
     }
@@ -285,7 +285,8 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
           } catch (error) {
             attempt++;
             console.log(`attempt ${attempt} failed with error ${error} (nftAddress ${nftAddress}), retrying...`);
-            await sleep(attempt * 100);
+            // await sleep(attempt * 100);
+            await randomSleep(10, 2000);
           }
         }
       })();
@@ -378,7 +379,8 @@ export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, c
           } catch (error) {
             attempt++;
             console.log(`attempt ${attempt} failed with error ${error}, retrying...`);
-            sleep(100);
+            // sleep(100);
+            await randomSleep(10, 2000);
           }
         }
       })();
