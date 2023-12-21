@@ -43,51 +43,14 @@ export async function getRegistryState(client : TonClient, releaseMode: ReleaseM
     };
 }
 
-export async function getDaos(client : TonClient, releaseMode: ReleaseMode, nextId: null | number = null, batchSize=100, order: 'desc' | 'asc' ='asc'): Promise<{endDaoId: number, daoAddresses: string[]}> {  
-
-    if (order == 'desc') return getDaosDesc(client, releaseMode, nextId, batchSize);
-    return getDaosAsc(client, releaseMode, nextId, batchSize);
-}
-
-async function getDaosDesc(client : TonClient, releaseMode: ReleaseMode, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
-
-  let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
-  let daoAddresses: string[] = [];
-
-  const nextDaoId = Number(await registryContract.getNextDaoId());
-
-  if (nextDaoId == 0) {
-    return {endDaoId: 0, daoAddresses: []}
-  }
-
-  if (startId == null) {
-    startId = nextDaoId-1;
-  }
-
-  const endDaoId = Math.max(0, startId - batchSize + 1);
-
-  for (let i = startId; i >= endDaoId; i -= batchSize) {
-    const batchStart = Math.max(i - batchSize + 1, endDaoId);
-    const batchEnd = i + 1;
-    const promises = [];
-    for (let id = batchStart; id < batchEnd; id++) {
-      promises.push(registryContract.getDaoAddress(BigInt(id)));
-    }
-    const results = await Promise.all(promises);
-    daoAddresses.push(...results.map(addr => addr.toString()));
-  }
-    
-  return {endDaoId: endDaoId-1, daoAddresses};
-}
-
-async function getDaosAsc(client : TonClient, releaseMode: ReleaseMode, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
+export async function getDaos(client : TonClient, releaseMode: ReleaseMode, startId: null | number = null, batchSize=100): Promise<{endDaoId: number, daoAddresses: string[]}> {  
 
     let registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
     let daoAddresses: string[] = [];
   
-    const nextDaoId = Number(await registryContract.getNextDaoId());
+    const endDaoId = Number(await registryContract.getNextDaoId());
 
-    if (nextDaoId == 0) {
+    if (endDaoId == 0) {
       return {endDaoId: 0, daoAddresses: []}
     }
   
@@ -95,8 +58,6 @@ async function getDaosAsc(client : TonClient, releaseMode: ReleaseMode, startId:
       startId = 0;
     }
   
-    const endDaoId = Math.min(nextDaoId, startId + batchSize);
-
     let batchCount = Math.ceil((endDaoId - startId) / batchSize);
     
     for (let batchIndex = 0; batchIndex < batchCount; batchIndex++) {
