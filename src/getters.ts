@@ -1,4 +1,4 @@
-import { executeMethodWithRetry, min, promiseAllWithRetry } from "./helpers";
+import { executeMethodWithRetry, min, promiseAllWithRetry, randomSleep, sleep } from "./helpers";
 import { Registry } from '../contracts/output/ton-vote_Registry'; 
 import { Dao } from '../contracts/output/ton-vote_Dao'; 
 import { Metadata } from '../contracts/output/ton-vote_Metadata'; 
@@ -73,6 +73,8 @@ export async function getDaos(client : TonClient, releaseMode: ReleaseMode, star
       }
     
       await promiseAllWithRetry(promises);
+      sleep(1000);
+
     }
           
     return {endDaoId, daoAddresses: daoAddresses};
@@ -151,6 +153,8 @@ async function getDaoProposalsDesc(client : TonClient, daoAddr: string, startId:
         }
         
         await promiseAllWithRetry(batchPromises);
+        sleep(1000);
+
     }
 
     return {endProposalId: endProposalId-1, proposalAddresses};
@@ -180,6 +184,7 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
         }
     
         const batchResults = await promiseAllWithRetry(batchPromises);
+        sleep(1000);
         proposalAddresses.push(...batchResults.map((addr: Address) => addr.toString()));
     }
 
