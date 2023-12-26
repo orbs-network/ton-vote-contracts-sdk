@@ -73,7 +73,7 @@ export async function getDaos(client : TonClient, releaseMode: ReleaseMode, star
       }
     
       await promiseAllWithRetry(promises);
-      sleep(1000);
+      sleep(5000);
 
     }
           
@@ -153,7 +153,7 @@ async function getDaoProposalsDesc(client : TonClient, daoAddr: string, startId:
         }
         
         await promiseAllWithRetry(batchPromises);
-        sleep(1000);
+        sleep(5000);
 
     }
 
@@ -184,7 +184,7 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
         }
     
         const batchResults = await promiseAllWithRetry(batchPromises);
-        sleep(1000);
+        sleep(5000);
         proposalAddresses.push(...batchResults.map((addr: Address) => addr.toString()));
     }
 
