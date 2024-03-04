@@ -6,6 +6,7 @@ import _ from "lodash";
 import { Transaction } from 'ton-core';
 import { ProposalMetadata, ProposalResult, Votes, VotingPower, TxData, VotingPowerStrategy, VotingPowerStrategyType, VotingSystem } from "./interfaces";
 import {addressStringToTupleItem, cellToAddress, chooseRandomKeys, convertToNano, intToTupleItem, randomSleep, sleep } from "./helpers";
+import { backOff } from "exponential-backoff";
 
 
 // import * as fs from 'fs';
@@ -343,7 +344,7 @@ export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, c
     const promises = Array.from({ length: batchEndIndex - batchStartIndex }, (_, j) => {
       const index = batchStartIndex + j;
       
-      return (async () => {
+      return (async () => backOff(async () => {
         let attempt = 0;
         let success = false;
         while (!success && attempt < maxRetries) {
@@ -383,7 +384,7 @@ export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, c
             await randomSleep(10, 2000);
           }
         }
-      })();
+      }))();
     });
 
     const results = await Promise.allSettled(promises);
