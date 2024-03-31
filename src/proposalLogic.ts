@@ -250,47 +250,35 @@ export async function getAllNftHolders(clientV4: TonClient4, proposalMetadata: P
     const promises = Array.from({ length: batchEndIndex - batchStartIndex }, (_, j) => {
       const index = batchStartIndex + j;
       
-      return (async () => {
-        let attempt = 0;
-        let success = false;
-        while (!success && attempt < maxRetries) {
-          try {
-            let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(nftAddress!), 'get_nft_address_by_index', intToTupleItem(index));
-        
-            if (res.result[0].type != 'slice') {
-              console.log(`unexpected result type from runMethod on get_nft_address_by_index on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
-              return;
-            }
-        
-            let nftItemAddress = cellToAddress(res.result[0].cell);
-                  
-            res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
-        
-            if (!res || !res.result || !res.result[3]) {
-              console.log(`could not extract result from nft ${nftItemAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
-              return;
-            }
+      return (async () => backOff(async () => {
+        let res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, Address.parse(nftAddress!), 'get_nft_address_by_index', intToTupleItem(index));
     
-            if (res.result[3].type != 'slice') {
-              console.log(`unexpected result type from runMethod on get_nft_data on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
-              return;
-            }
-    
-            const address = cellToAddress(res.result[3].cell).toString();
-
-            if (!allNftItemsHolders[address]) allNftItemsHolders[address] = [];
-            allNftItemsHolders[address].push(nftItemAddress.toString());
-
-            success = true;
-
-          } catch (error) {
-            attempt++;
-            console.log(`attempt ${attempt} failed with error ${error} (nftAddress ${nftAddress}), retrying...`);
-            // await sleep(attempt * 100);
-            await randomSleep(10, 2000);
-          }
+        if (res.result[0].type != 'slice') {
+          console.log(`unexpected result type from runMethod on get_nft_address_by_index on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
+          return;
         }
-      })();
+    
+        let nftItemAddress = cellToAddress(res.result[0].cell);
+              
+        res = await clientV4.runMethod(proposalMetadata.mcSnapshotBlock, nftItemAddress, 'get_nft_data');
+    
+        if (!res || !res.result || !res.result[3]) {
+          console.log(`could not extract result from nft ${nftItemAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
+          return;
+        }
+
+        if (res.result[3].type != 'slice') {
+          console.log(`unexpected result type from runMethod on get_nft_data on address: ${nftAddress} at block ${proposalMetadata.mcSnapshotBlock}`);
+          return;
+        }
+
+        const address = cellToAddress(res.result[3].cell).toString();
+
+        if (!allNftItemsHolders[address]) allNftItemsHolders[address] = [];
+        allNftItemsHolders[address].push(nftItemAddress.toString());
+
+      }))();
+
     });
 
     const results = await Promise.allSettled(promises);
@@ -345,10 +333,6 @@ export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, c
       const index = batchStartIndex + j;
       
       return (async () => backOff(async () => {
-        let attempt = 0;
-        let success = false;
-        while (!success && attempt < maxRetries) {
-          try {
             let res = await clientV4.runMethod(mcBlockNum, Address.parse(collectionAddr!), 'get_nft_address_by_index', intToTupleItem(index));
         
             if (res.result[0].type != 'slice') {
@@ -374,16 +358,7 @@ export async function getAllNftHoldersFromCollectionAddr(clientV4: TonClient4, c
 
             if (!allNftItemsHolders[address]) allNftItemsHolders[address] = [];
             allNftItemsHolders[address].push(nftItemAddress.toString());
-
-            success = true;
-
-          } catch (error) {
-            attempt++;
-            console.log(`attempt ${attempt} failed with error ${error}, retrying...`);
-            // sleep(100);
-            await randomSleep(10, 2000);
-          }
-        }
+          
       }))();
     });
 

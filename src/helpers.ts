@@ -11,6 +11,7 @@ import fs from "fs";
 import {execSync} from "child_process";
 import seedrandom from 'seedrandom';
 import BigNumber from "bignumber.js";
+import { backOff } from "exponential-backoff";
 
 enum JETTON_OPS {
   ChangeAdmin = 3,
@@ -194,48 +195,28 @@ export function storeComment(msg: string) {
   };
 }
 
-export async function promiseAllWithRetry(promises: Promise<any>[], retries: number = MAX_RETRIES): Promise<any> {
+export async function promiseAllWithRetry(promises: Promise<any>[]): Promise<any> {
 
   try {
-    return await Promise.all(promises);
+    await backOff(async () => await Promise.all(promises));
   
-  } catch (err) {
-  
-    if (retries > 0) {
-      console.log(`Retry attempt ${MAX_RETRIES - retries + 1} failed with error ${err}`);
-      let minSleepTime = (MAX_RETRIES - retries) * 2000; 
-      // await randomSleep(minSleepTime, minSleepTime + 2000);
-      // await sleep(2000);
-      await randomSleep(100, 2000);
-      await promiseAllWithRetry(promises, retries - 1);
-    } else {
+  } catch (err) {  
       console.error('All retry attempts failed.');
-      throw err;
-    }
-  
+      throw err;  
   }
 }
 
-export async function executeMethodWithRetry<T extends {}, K extends keyof T>(instance: T, methodName: K, retries: number = MAX_RETRIES): Promise<any> {
+export async function executeMethodWithRetry<T extends {}, K extends keyof T>(instance: T, methodName: K): Promise<any> {
 
   try {
     if (methodName in instance && typeof instance[methodName] === 'function') {
-      return await (instance[methodName] as any)();
+      return backOff(async () => await (instance[methodName] as any)());
     } else {
       throw new Error(`No method named "${String(methodName)}" found`);
     }
-  } catch (err) {
-    if (retries > 0) {
-      console.log(`Retry attempt ${MAX_RETRIES - retries + 1} failed, retrying...`);
-      let minSleepTime = (MAX_RETRIES - retries) * 2000; 
-      // await randomSleep(minSleepTime, minSleepTime + 2000);
-      // await sleep(2000);
-      await randomSleep(100, 2000);
-      return await executeMethodWithRetry(instance, methodName, retries - 1);
-    } else {
+  } catch (err) {  
       console.error('All retry attempts failed.');
-      throw err;
-    }
+      throw err;    
   }
 }
 
