@@ -457,7 +457,7 @@ export async function getSingleVoterPower(
             console.log(`warning decimals is undefined, setting default value to 9!`)
             decimals = 9;
           };
-                  
+
           return convertToNano(res.result[0].value.toString(), decimals);
 
         } else {
