@@ -198,7 +198,7 @@ export function storeComment(msg: string) {
 export async function promiseAllWithRetry(promises: Promise<any>[]): Promise<any> {
 
   try {
-    await backOff(async () => await Promise.all(promises));
+    return await backOff(async () => await Promise.all(promises));
   
   } catch (err) {  
       console.error('All retry attempts failed.');
