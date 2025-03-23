@@ -79,6 +79,30 @@ export async function getDaos(client : TonClient, releaseMode: ReleaseMode, star
     return {endDaoId, daoAddresses: daoAddresses};
 }
 
+export async function getSingleDao(
+  client: TonClient,
+  releaseMode: ReleaseMode,
+  daoId: number
+): Promise<{ daoAddress: string; endDaoId: number }> {
+  // Open the registry contract using the provided release mode
+  const registryContract = client.open(await Registry.fromInit(BigInt(releaseMode)));
+  
+  // Retrieve the next DAO id; valid DAO IDs are in the range [0, endDaoId - 1]
+  const endDaoId = Number(await registryContract.getNextDaoId());
+  
+  if (endDaoId === 0) {
+    throw new Error("No DAOs available in the registry.");
+  }
+  
+  if (daoId >= endDaoId) {
+    throw new Error(`DAO id ${daoId} is out of range. Current endDaoId is ${endDaoId}.`);
+  }
+  
+  // Fetch and return the DAO address for the provided daoId
+  const daoAddress = (await registryContract.getDaoAddress(BigInt(daoId))).toString();
+  return { daoAddress, endDaoId };
+}
+
 export async function getDaoState(client : TonClient, daoAddr: string): Promise<DaoState> {  
 
     let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
@@ -190,6 +214,27 @@ async function getDaoProposalsAsc(client : TonClient, daoAddr: string, startId: 
     return {endProposalId, proposalAddresses};
 }
 
+export async function getSingleDaoProposal(
+    client: TonClient,
+    daoAddr: string,
+    proposalId: number
+  ): Promise<{ proposalAddress: string; endProposalId: number }> {
+    let daoContract = client.open(Dao.fromAddress(Address.parse(daoAddr)));
+    let proposalDeployer = client.open(await ProposalDeployer.fromInit(daoContract.address));
+  
+    if (!(await client.isContractDeployed(proposalDeployer.address))) {
+      throw new Error("Proposal Deployer is not deployed");
+    }
+  
+    const endProposalId = Number(await proposalDeployer.getNextProposalId());
+    if (proposalId >= endProposalId) {
+      throw new Error(`Proposal id ${proposalId} is out of range. Next proposal id is ${endProposalId}.`);
+    }
+  
+    const proposalAddress = (await proposalDeployer.getProposalAddr(BigInt(proposalId))).toString();
+    return { proposalAddress, endProposalId };
+}
+  
 export function extractVotingSystem(votingSystemStr: string): VotingSystem {
 
     try {        
