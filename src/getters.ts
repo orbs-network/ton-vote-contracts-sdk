@@ -344,22 +344,37 @@ export async function getProposalMetadata(client : TonClient, client4: TonClient
         votingSystem, votingPowerStrategies, title, description, quorum, hide, jettonMetadata, nftMetadata};
 }
 
-async function getBlockFromTime(clientV4: TonClient4, utime: number): Promise<number> {
-
+async function getBlockFromTime(clientV4: TonClient4, utime: number) {
     let res;
-
-    try {
-        res = (await clientV4.getBlockByUtime(utime)).shards;
-
-    } catch {
-        console.log(`couldn't get block by utime ${utime}`);
-        return -1;        
+    let currentUtime = utime;
+    const maxRetries = 20;
+    
+    for (let retry = 0; retry <= maxRetries; retry++) {
+      try {
+        res = (await clientV4.getBlockByUtime(currentUtime)).shards;
+        
+        // If we got a result and it's not empty, process it
+        if (res && res.length > 0) {
+          console.log(`res: ${JSON.stringify(res)}`);
+          for (let i = 0; i < res.length; i++) {
+            if (res[i].workchain == -1)
+              return res[i].seqno;
+          }
+          // If we found shards but none with workchain -1, continue retrying
+        }
+        
+        // If result is empty or no valid workchain found, try with incremented utime
+        currentUtime += 1;
+        console.log(`Empty result or no valid workchain for utime ${currentUtime - 1}, trying with utime ${currentUtime}`);
+      }
+      catch {
+        console.log(`couldn't get block by utime ${currentUtime}`);
+        currentUtime += 1;
+        continue;
+      }
     }
-  
-    for (let i = 0; i < res.length; i++) {
-      if (res[i].workchain == -1) return res[i].seqno;
-    }
-  
+    
+    console.log(`No block found after ${maxRetries} retries`);
     return -1;
 }
 
